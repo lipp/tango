@@ -1,3 +1,4 @@
+-- a simple rpc lib inspired by luarpc
 
 require'socket'
 require'copas'
@@ -6,95 +7,108 @@ require'coxpcall'
 
 module('tango',package.seeall)
 
---local _serialize = table.marshal
---local _unserialize = table.unmarshal
-local _serialize = table.sheriff
-local _unserialize = table.unsheriff
-local _append = table.insert
-local _remove = table.remove
+-- default serializer
+-- the serializer must take a table as argument and return a string
+local serialize = table.sheriff
 
--- create an rpc proxy which operates on the socket 
--- provided (socket is not allowed to be copas.wrap'ed)
-function proxy(socket,fpath)
+-- default unserializer
+-- unserializer must take a string as argument and return a table
+local unserialize = table.unsheriff
+
+-- 
+local asciilen = 12
+
+local _formatlen = function(len)
+                     return string.format("%"..asciilen.."d",len)
+                   end
+
+-- to remove the first return value of the (co)pcall on the server
+local _tabremove = table.remove
+
+
+-- create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
+-- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
+function proxy(socket,functionpath)
   local proxytab = {}
   return setmetatable( 
     proxytab,{
       -- called when dot operator is invoked on proxy
       -- to access function or table
       __index = function(self,key)
-                  local _proxy = rawget(self,key)
-                  -- if not yet created, create proxy
-                  if not _proxy then 
+                  -- look up if proxy already exists
+                  local proxytab = rawget(self,key)
+                  -- if proxy is not yet created, create proxy
+                  if not proxytab then 
                     -- make deep copy of old fpath
-                    local _newfpath
-                    if not fpath then
-                      _newfpath = key
+                    local newfunctionpath
+                    if not functionpath then
+                      newfunctionpath = key
                     else
-                      _newfpath = fpath..'.'..key
+                      newfunctionpath = functionpath..'.'..key
                     end
---                    print(_newfpath)
-                    _proxy = proxy(socket,_newfpath)
-                    rawset(self,key,_proxy)
+                    -- call proxy constructor
+                    proxytab = proxy(socket,newfunctionpath)
+                    -- store proxytab for next __index call
+                    rawset(self,key,proxytab)
                   end                            
-                  return _proxy
+                  return proxytab
                 end,
 
-      -- when trying to invoke functions on the proxy
-      -- this method will be called
+      -- when trying to invoke functions on the proxy, this method will be called
+      -- wraps the variable arguments into a table and transmits them to the server 
       __call = function(self,...)
-                 local _request = _serialize{
-                   --                              fpath=getmetatable(self).fpath,
-                   fpath,
+                 -- wrap the functionparh and the variable arguments into a table
+                 local request = serialize{
+                   functionpath,
                    {...}
                  }
-                 -- send number of bytes the serialized table will have
-                 --                          local nbytes = #_request
---                 local _tosend = string.format("%6d",#_request).._request
-                 socket:send(string.format("%6d",#_request))
-                 socket:send(_request)
+                 -- send asciilength ascii coded length
+                 local sent,err = socket:send(_formatlen(#request))
+                 if not sent then
+                   -- propagate error
+                   error(err)
+                 end
+                 -- send the table
+                 sent,err = socket:send(request)
+                 if not sent then
+                   -- propagate error
+                   error(err)
+                 end
 
-                 -- local _tosend = string.format("%4d",#_request).._request
-                 -- local sent,err = socket:send(_tosend)
-                 -- if not sent then
-                 --   error(err)
-                 -- end
-                 -- send the serialized table
-                 -- local sent = 0
-                 -- repeat 
-                 --   local sent,err = socket:send(_request,sent+1,)
-                 --   if not sent then
-                 --     error(err)
-                 --   end
-                 --   nbytes = nbytes - sent
-                 -- until nbytes > 0
-                 -- flush the socket to allow fast response
-                 --                            copas.flush(socket:flush()
-                 
-                 -- receive the length of the response
-                 --                            local nbytes,err = socket:receive('*l')
-                 local nbytes,err = socket:receive(6)
-                 if not nbytes then
+                 -- receive/wait on answer
+                 local responselen,err = socket:receive(asciilen)
+                 if not responselen then
                    -- propagate error
                    error(err)
                    return 
                  end
+
+                 -- convert ascii len to number of bytes
+                 responselen = tonumber(responselen)
+                 if not responselen then
+                   -- propagate error
+                   error("response format error")
+                   return 
+                 end
+
                  -- receive the response
-                 local _response,err = socket:receive(tonumber(nbytes))
-                 if not _response then
+                 local response,err = socket:receive(responselen)
+                 if not response then
                    -- propagate error
                    error(err)
                    return 
                  end
-                 local _responsetab = _unserialize(_response)
-                 -- the response table contains all, the 
-                 -- {pcall(...)} returns on the server side
-                 if _responsetab[1] == true then
-                   _remove(_responsetab,1)
+                 
+                 -- unserialize into a table
+                 local responsetab = unserialize(response)
+                 -- the response table contains the {pcall(...)} table from the server 
+                 if responsetab[1] == true then
+                   _tabremove(responsetab,1)
                    -- return all results
-                   return unpack(_responsetab)
+                   return unpack(responsetab)
                  else
                    -- propagate error
-                   error(_responsetab[2])
+                   error(responsetab[2])
                  end                                                      
                end
     })

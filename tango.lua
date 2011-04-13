@@ -41,8 +41,11 @@ local _keytostr = function(k)
                   end
 
 --- default serializer
--- the serializer must take a table as argument and return a string
--- copied from http://lua/users.org/wiki/TableUtils
+-- implementation copied from http://lua/users.org/wiki/TableUtils
+-- may be overwritten for custom serialization (function must take a table and return a string)
+-- @param tbl the table to be serialized
+-- @return the serialized table as string
+-- @usage tango.serialize = table.marshal (using lua-marshal as serializer)
 serialize = function(tbl)
                local result, done = {}, {}
                for k,v in ipairs(tbl) do
@@ -58,7 +61,11 @@ serialize = function(tbl)
             end
 
 --- default unserializer
+-- may be overwritten for custom serialization
 -- unserializer must take a string as argument and return a table
+-- @param strtbl the serialized table as string
+-- @return the unserialized table
+-- @usage tango.unserialize = table.unmarshal (using lua-marshal as serializer)
 unserialize = function(strtab)
                  -- assuming strtab contains a stringified table
                  return loadstring('return '..strtab)()
@@ -66,7 +73,8 @@ unserialize = function(strtab)
 
 --- the maximum number of decimals the serialized table's size can grow to
 -- this value can be reduced to save very some bytes of traffic.
-local tabmaxdecimals = 12
+-- @usage tango.tabmaxdecimals=3 (allow 999 bytes maximum table length and safe some bytes traffic)
+tabmaxdecimals = 12
 
 --- private helper
 local _formatlen = function(len)
@@ -85,6 +93,8 @@ _proxy = function(socket,functionpath)
                        --- private helper
                        -- called when dot operator is invoked on proxy
                        -- to access function or table
+                       -- @param self the parent proxy
+                       -- @param key the proxy / remote table key to index
                         __index = function(self,key)
                                      -- look up if proxy already exists
                                      local proxytab = rawget(self,key)
@@ -108,6 +118,8 @@ _proxy = function(socket,functionpath)
                         --- private helper
                         -- when trying to invoke functions on the proxy, this method will be called
                         -- wraps the variable arguments into a table and transmits them to the server 
+                        -- @param self the proxy
+                        -- @param ... variable argument list
                         __call = function(self,...)
                                     -- wrap the functionparh and the variable arguments into a table
                                     local request = serialize{
@@ -168,11 +180,13 @@ _proxy = function(socket,functionpath)
 
 --- returns a proxy to the specified client 
 -- invoke remote functions on the returned variable
--- e.g.:
--- c = tango.connect('localhost')
--- c.greet('horst')
+-- @usage c = tango.connect('localhost'); c.greet('horst')
 -- it is also possible to functions inside tables, like
--- c.utils.greetall()
+-- @usage c.utils.greetall()
+-- @return a proxy to the server global table
+-- @param adr the server address, may be server name e.g. www.horst.de
+-- @param port the port on which the server listens (default 12345)
+-- @param options
 client = function(adr,port,options)
             local options = options or {}
             local sock = socket.tcp()
@@ -187,6 +201,8 @@ client = function(adr,port,options)
 
 --- returns a copas compatible server, which holds the connection and 
 -- dispatches all proxy / client requests 
+-- @return a copas server
+-- @param socket a lua socket instance, which should be delivered by copas
 copasserver = function(socket)
              socket:setoption('tcp-nodelay',true)
              local ok,callerr
@@ -247,6 +263,8 @@ copasserver = function(socket)
 
 --- starts a copas server with tango.copasserver
 -- for standalone usage of tango server 
+-- never returns
+-- @param port server will bind the all interfaces on the specified port (default 12345)
 serve = function(port)
            copas.addserver(socket.bind('*',port or 12345),copasserver)
            copas.loop()

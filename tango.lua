@@ -29,7 +29,8 @@ local unpack = unpack
 -- to access outer function in the remote call (__call)
 local _G = _G
 
---- A simple remote procedure module inspired by luarpc
+--- A simple and transparent remote procedure module inspired by LuaRPC.
+-- It requires LuaSocket and Copas.
 module('tango')
 
 
@@ -58,9 +59,9 @@ local _keytostr = function(k)
                      end
                   end
 
---- default serializer
--- implementation copied from http://lua/users.org/wiki/TableUtils
--- may be overwritten for custom serialization (function must take a table and return a string)
+--- Default serializer.
+-- Implementation copied from http://lua/users.org/wiki/TableUtils.
+-- May be overwritten for custom serialization (function must take a table and return a string).
 -- @param tbl the table to be serialized
 -- @return the serialized table as string
 -- @usage tango.serialize = table.marshal (using lua-marshal as serializer)
@@ -78,9 +79,9 @@ serialize = function(tbl)
                return "{".._tconcat(result,",").."}"
             end
 
---- default unserializer
--- may be overwritten for custom serialization
--- unserializer must take a string as argument and return a table
+--- Default unserializer.
+-- May be overwritten for custom serialization.
+-- Unserializer must take a string as argument and return a table.
 -- @param strtbl the serialized table as string
 -- @return the unserialized table
 -- @usage tango.unserialize = table.unmarshal (using lua-marshal as serializer)
@@ -89,8 +90,8 @@ unserialize = function(strtab)
                  return loadstring('return '..strtab)()
               end
 
---- the maximum number of decimals the serialized table's size can grow to
--- this value can be reduced to save very some bytes of traffic.
+--- The maximum number of decimals the serialized table's size can grow to.
+-- This value can be reduced to save very some bytes of traffic.
 -- @usage tango.tabmaxdecimals=3 (allow 999 bytes maximum table length and safe some bytes traffic)
 tabmaxdecimals = 12
 
@@ -101,14 +102,14 @@ local _formatlen = function(len)
 
 
 
---- private helper.
--- create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
+--- Private helper.
+-- Create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 _proxy = function(socket,functionpath)
                   return setmetatable( 
                      {},{
-                       --- private helper
-                       -- called when dot operator is invoked on proxy
+                       --- Private helper.
+                       -- Called when dot operator is invoked on proxy
                        -- to access function or table
                        -- @param self the parent proxy
                        -- @param key the proxy / remote table key to index
@@ -132,8 +133,8 @@ _proxy = function(socket,functionpath)
                                      return proxytab
                                   end,
 
-                        --- private helper
-                        -- when trying to invoke functions on the proxy, this method will be called
+                        --- Private helper.
+                        -- When trying to invoke functions on the proxy, this method will be called
                         -- wraps the variable arguments into a table and transmits them to the server 
                         -- @param self the proxy
                         -- @param ... variable argument list
@@ -195,8 +196,8 @@ _proxy = function(socket,functionpath)
                      })
                end
 
---- returns a proxy to the specified client 
--- invoke remote functions on the returned variable
+--- Returns a proxy to the specified client.
+-- Invoke remote functions on the returned variable.
 -- @usage c = tango.connect('localhost'); c.greet('horst')
 -- it is also possible to functions inside tables, like
 -- @usage c.utils.greetall()
@@ -216,8 +217,8 @@ client = function(adr,port,options)
             return _proxy(sock)
          end
 
---- returns a copas compatible server, which holds the connection and 
--- dispatches all proxy / client requests 
+--- Returns a copas compatible server, which holds the connection and 
+-- dispatches all proxy / client requests. 
 -- @return a copas server
 -- @param socket a lua socket instance, which should be delivered by copas
 copasserver = function(socket)
@@ -278,9 +279,8 @@ copasserver = function(socket)
           end
 
 
---- starts a copas server with tango.copasserver
--- for standalone usage of tango server 
--- never returns
+--- Starts a copas server with tango.copasserver.
+-- For standalone usage of tango server, never returns.
 -- @param port server will bind the all interfaces on the specified port (default 12345)
 serve = function(port)
            copas.addserver(socket.bind('*',port or 12345),copasserver)

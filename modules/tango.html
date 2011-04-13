@@ -62,7 +62,7 @@
 
 <h1>Module <code>tango</code></h1>
 
-<p></p>
+<p>A simple and transparent remote procedure module inspired by LuaRPC. It requires LuaSocket and Copas.</p>
 
 
 
@@ -73,42 +73,42 @@
 
 	<tr>
 	<td class="name" nowrap><a href="#__call">__call</a>&nbsp;(self, ...)</td>
-	<td class="summary">private helper when trying to invoke functions on the proxy, this method will be called wraps the variable arguments into a table and transmits them to the server </td>
+	<td class="summary">Private helper.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#__index">__index</a>&nbsp;(self, key)</td>
-	<td class="summary">private helper called when dot operator is invoked on proxy to access function or table </td>
+	<td class="summary">Private helper.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#_proxy">_proxy</a>&nbsp;(socket, functionpath)</td>
-	<td class="summary">private helper.</td>
+	<td class="summary">Private helper.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#client">client</a>&nbsp;(adr, port, options)</td>
-	<td class="summary">returns a proxy to the specified client invoke remote functions on the returned variable </td>
+	<td class="summary">Returns a proxy to the specified client.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#copasserver">copasserver</a>&nbsp;(socket)</td>
-	<td class="summary">returns a copas compatible server, which holds the connection and dispatches all proxy / client requests </td>
+	<td class="summary">Returns a copas compatible server, which holds the connection and dispatches all proxy / client requests.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#serialize">serialize</a>&nbsp;(tbl)</td>
-	<td class="summary">default serializer implementation copied from http://lua/users.org/wiki/TableUtils may be overwritten for custom serialization (function must take a table and return a string) </td>
+	<td class="summary">Default serializer.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#serve">serve</a>&nbsp;(port)</td>
-	<td class="summary">starts a copas server with tango.copasserver for standalone usage of tango server never returns </td>
+	<td class="summary">Starts a copas server with tango.copasserver.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#unserialize">unserialize</a>&nbsp;(strtab, strtbl)</td>
-	<td class="summary">default unserializer may be overwritten for custom serialization unserializer must take a string as argument and return a table </td>
+	<td class="summary">Default unserializer.</td>
 	</tr>
 
 </table>
@@ -130,7 +130,7 @@
 
 <dt><a name="__call"></a><strong>__call</strong>&nbsp;(self, ...)</dt>
 <dd>
-private helper when trying to invoke functions on the proxy, this method will be called wraps the variable arguments into a table and transmits them to the server
+Private helper. When trying to invoke functions on the proxy, this method will be called wraps the variable arguments into a table and transmits them to the server
 
 
 <h3>Parameters</h3>
@@ -160,7 +160,7 @@ private helper when trying to invoke functions on the proxy, this method will be
 
 <dt><a name="__index"></a><strong>__index</strong>&nbsp;(self, key)</dt>
 <dd>
-private helper called when dot operator is invoked on proxy to access function or table
+Private helper. Called when dot operator is invoked on proxy to access function or table
 
 
 <h3>Parameters</h3>
@@ -190,7 +190,7 @@ private helper called when dot operator is invoked on proxy to access function o
 
 <dt><a name="_proxy"></a><strong>_proxy</strong>&nbsp;(socket, functionpath)</dt>
 <dd>
-private helper. create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed) functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
+Private helper. Create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed) functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 
 
 <h3>Parameters</h3>
@@ -220,7 +220,7 @@ private helper. create a rpc proxy which operates on the socket provided (socket
 
 <dt><a name="client"></a><strong>client</strong>&nbsp;(adr, port, options)</dt>
 <dd>
-returns a proxy to the specified client invoke remote functions on the returned variable
+Returns a proxy to the specified client. Invoke remote functions on the returned variable.
 
 
 <h3>Parameters</h3>
@@ -266,7 +266,7 @@ a proxy to the server global table
 
 <dt><a name="copasserver"></a><strong>copasserver</strong>&nbsp;(socket)</dt>
 <dd>
-returns a copas compatible server, which holds the connection and dispatches all proxy / client requests
+Returns a copas compatible server, which holds the connection and dispatches all proxy / client requests.
 
 
 <h3>Parameters</h3>
@@ -295,7 +295,7 @@ a copas server
 
 <dt><a name="serialize"></a><strong>serialize</strong>&nbsp;(tbl)</dt>
 <dd>
-default serializer implementation copied from http://lua/users.org/wiki/TableUtils may be overwritten for custom serialization (function must take a table and return a string)
+Default serializer. Implementation copied from http://lua/users.org/wiki/TableUtils. May be overwritten for custom serialization (function must take a table and return a string).
 
 
 <h3>Parameters</h3>
@@ -327,7 +327,7 @@ the serialized table as string
 
 <dt><a name="serve"></a><strong>serve</strong>&nbsp;(port)</dt>
 <dd>
-starts a copas server with tango.copasserver for standalone usage of tango server never returns
+Starts a copas server with tango.copasserver. For standalone usage of tango server, never returns.
 
 
 <h3>Parameters</h3>
@@ -353,7 +353,7 @@ starts a copas server with tango.copasserver for standalone usage of tango serve
 
 <dt><a name="unserialize"></a><strong>unserialize</strong>&nbsp;(strtab, strtbl)</dt>
 <dd>
-default unserializer may be overwritten for custom serialization unserializer must take a string as argument and return a table
+Default unserializer. May be overwritten for custom serialization. Unserializer must take a string as argument and return a table.
 
 
 <h3>Parameters</h3>

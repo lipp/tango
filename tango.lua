@@ -15,6 +15,7 @@ local _sgsub = string.gsub
 local _sformat = string.format
 
 -- private helper for serialize
+-- copied from http://lua/users.org/wiki/TableUtils
 local _valtostr = function(v)
                      local vtype = type(v)
                      if "string" == vtype then
@@ -29,6 +30,7 @@ local _valtostr = function(v)
                   end
 
 -- private helper for serialize
+-- copied from http://lua/users.org/wiki/TableUtils
 local _keytostr = function(k)
                      if "string" == type(k) and _smatch(k,"^[_%a][_%a%d]*$") then
                         return k
@@ -39,6 +41,7 @@ local _keytostr = function(k)
 
 -- default serializer
 -- the serializer must take a table as argument and return a string
+-- copied from http://lua/users.org/wiki/TableUtils
 serialize = function(tbl)
                local result, done = {}, {}
                for k,v in ipairs(tbl) do
@@ -157,7 +160,7 @@ _proxy = function(socket,functionpath)
                      })
                end
 
--- return a proxy to the specified client 
+-- returns a proxy to the specified client 
 client = function(adr,port,options)
             local options = options or {}
             local sock = socket.tcp()

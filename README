@@ -1,10 +1,11 @@
 About
 ------------
-tango is a Lua module, which allows easy and transparent remote procedure calls (RPC). 
+tango is a one-file pure Lua module, which allows easy and transparent remote procedure calls (RPC). 
 It is inspired by LuaRPC. The server is copas compatible to allow other asynchronous services to run at the same time. 
 
 Features
 ------------
+* one file <300 LOC
 * simple
 * transparent
 * copas compatible

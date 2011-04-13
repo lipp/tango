@@ -1,4 +1,5 @@
 -- a simple rpc lib inspired by luarpc
+-- Gerhard Lipp
 
 require'socket'
 require'copas'
@@ -14,7 +15,7 @@ local _sgmatch = string.gmatch
 local _sgsub = string.gsub
 local _sformat = string.format
 
--- private helper for serialize
+--- private helper for serialize
 -- copied from http://lua/users.org/wiki/TableUtils
 local _valtostr = function(v)
                      local vtype = type(v)
@@ -29,7 +30,7 @@ local _valtostr = function(v)
                      end
                   end
 
--- private helper for serialize
+--- private helper for serialize
 -- copied from http://lua/users.org/wiki/TableUtils
 local _keytostr = function(k)
                      if "string" == type(k) and _smatch(k,"^[_%a][_%a%d]*$") then
@@ -39,7 +40,7 @@ local _keytostr = function(k)
                      end
                   end
 
--- default serializer
+--- default serializer
 -- the serializer must take a table as argument and return a string
 -- copied from http://lua/users.org/wiki/TableUtils
 serialize = function(tbl)
@@ -56,30 +57,34 @@ serialize = function(tbl)
                return "{".._tconcat(result,",").."}"
             end
 
--- default unserializer
+--- default unserializer
 -- unserializer must take a string as argument and return a table
 unserialize = function(strtab)
                  -- assuming strtab contains a stringified table
                  return loadstring('return '..strtab)()
               end
 
--- 
-local asciilen = 12
+--- the maximum number of decimals the serialized table's size can grow to
+-- this value can be reduced to save very some bytes of traffic.
+local tabmaxdecimals = 12
 
+--- private helper
 local _formatlen = function(len)
-                      return _sformat("%"..asciilen.."d",len)
+                      return _sformat("%"..tabmaxdecimals.."d",len)
                    end
 
 
 
+--- private helper.
 -- create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 _proxy = function(socket,functionpath)
                   local tremove = table.remove
                   return setmetatable( 
                      {},{
-                        -- called when dot operator is invoked on proxy
-                        -- to access function or table
+                       --- private helper
+                       -- called when dot operator is invoked on proxy
+                       -- to access function or table
                         __index = function(self,key)
                                      -- look up if proxy already exists
                                      local proxytab = rawget(self,key)
@@ -100,6 +105,7 @@ _proxy = function(socket,functionpath)
                                      return proxytab
                                   end,
 
+                        --- private helper
                         -- when trying to invoke functions on the proxy, this method will be called
                         -- wraps the variable arguments into a table and transmits them to the server 
                         __call = function(self,...)
@@ -108,7 +114,7 @@ _proxy = function(socket,functionpath)
                                        functionpath,
                                        {...}
                                     }
-                                    -- send asciilength ascii coded length
+                                    -- send tabmaxdecimalsgth ascii coded length
                                     local sent,err = socket:send(_formatlen(#request))
                                     if not sent then
                                        -- propagate error
@@ -122,7 +128,7 @@ _proxy = function(socket,functionpath)
                                     end
 
                                     -- receive/wait on answer
-                                    local responselen,err = socket:receive(asciilen)
+                                    local responselen,err = socket:receive(tabmaxdecimals)
                                     if not responselen then
                                        -- propagate error
                                        error(err)
@@ -160,7 +166,13 @@ _proxy = function(socket,functionpath)
                      })
                end
 
--- returns a proxy to the specified client 
+--- returns a proxy to the specified client 
+-- invoke remote functions on the returned variable
+-- e.g.:
+-- c = tango.connect('localhost')
+-- c.greet('horst')
+-- it is also possible to functions inside tables, like
+-- c.utils.greetall()
 client = function(adr,port,options)
             local options = options or {}
             local sock = socket.tcp()
@@ -173,9 +185,9 @@ client = function(adr,port,options)
             return _proxy(sock)
          end
 
--- returns a copas compatible handler, which holds the connection and 
+--- returns a copas compatible server, which holds the connection and 
 -- dispatches all proxy / client requests 
-handler = function(socket)
+copasserver = function(socket)
              socket:setoption('tcp-nodelay',true)
              local ok,callerr
              
@@ -183,7 +195,7 @@ handler = function(socket)
              local wrapsocket = copas.wrap(socket)
              repeat 
                 -- read length of request as ascii
-                local requestlen,err = wrapsocket:receive(asciilen)
+                local requestlen,err = wrapsocket:receive(tabmaxdecimals)
                 if not requestlen then
                    return 
                 end
@@ -233,9 +245,10 @@ handler = function(socket)
           end
 
 
--- starts a copas server with tango.handler 
+--- starts a copas server with tango.copasserver
+-- for standalone usage of tango server 
 serve = function(port)
-           copas.addserver(socket.bind('*',port or 12345),handler)
+           copas.addserver(socket.bind('*',port or 12345),copasserver)
            copas.loop()
         end
 

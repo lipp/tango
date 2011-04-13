@@ -1,21 +1,39 @@
--- a simple rpc lib inspired by luarpc
--- Gerhard Lipp
-
 require'socket'
 require'copas'
 require'coxpcall'
 
-module('tango',package.seeall)
-
 -- private helpers
 local _tinsert = table.insert
 local _tconcat = table.concat
+local _tremove = table.remove
 local _smatch = string.match
 local _sgmatch = string.gmatch
 local _sgsub = string.gsub
 local _sformat = string.format
+local copas = copas
+local socket = socket
+local setmetatable = setmetatable
+local rawget = rawget
+local rawset = rawset
+local ipairs = ipairs
+local pairs = pairs
+local type = type
+local tostring = tostring
+local tonumber = tonumber
+local copcall = copcall
+local error = error
+local print = print
+local loadstring = loadstring
+local unpack = unpack
 
---- private helper for serialize
+-- to access outer function in the remote call (__call)
+local _G = _G
+
+--- A simple remote procedure module inspired by luarpc
+module('tango')
+
+
+-- private helper for serialize
 -- copied from http://lua/users.org/wiki/TableUtils
 local _valtostr = function(v)
                      local vtype = type(v)
@@ -30,7 +48,7 @@ local _valtostr = function(v)
                      end
                   end
 
---- private helper for serialize
+-- private helper for serialize
 -- copied from http://lua/users.org/wiki/TableUtils
 local _keytostr = function(k)
                      if "string" == type(k) and _smatch(k,"^[_%a][_%a%d]*$") then
@@ -87,7 +105,6 @@ local _formatlen = function(len)
 -- create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 _proxy = function(socket,functionpath)
-                  local tremove = table.remove
                   return setmetatable( 
                      {},{
                        --- private helper
@@ -167,7 +184,7 @@ _proxy = function(socket,functionpath)
                                     local responsetab = unserialize(response)
                                     -- the response table contains the {pcall(...)} table from the server 
                                     if responsetab[1] == true then
-                                       tremove(responsetab,1)
+                                       _tremove(responsetab,1)
                                        -- return all results
                                        return unpack(responsetab)
                                     else
@@ -269,10 +286,4 @@ serve = function(port)
            copas.addserver(socket.bind('*',port or 12345),copasserver)
            copas.loop()
         end
-
-
-
-
-
-
 

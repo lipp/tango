@@ -102,9 +102,10 @@ local _formatlen = function(len)
 
 
 
---- Private helper.
+--- Private helper. Do not use directly, use client function instead.
 -- Create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
+-- @see client
 _proxy = function(socket,functionpath)
                   return setmetatable( 
                      {},{
@@ -243,12 +244,16 @@ copasserver = function(socket)
 
                 -- method 
                 ok,callerr = copcall(function()    
-                                local requesttab = unserialize(request)
+                                       -- backing up serialization to allow serialization exchange                                     
+                                       local unserialize_bak = unserialize
+                                       local serialize_bak = serialize
+                                       
+                                local requesttab = unserialize_bak(request)
                                 -- grab global table as root table
                                 local func = _G
                                 -- iterate over fpath and search corresponding tab
                                 -- requesttab[1] contains functionpath, e.g. 'a.b.c.d'
-                                for part in _sgmatch(requesttab[1],"[%a_]+") do
+                                for part in _sgmatch(requesttab[1],"[%w_]+") do
                                    func = func[part] 
                                 end
                                 -- call the function and collect all return values in table
@@ -259,7 +264,7 @@ copasserver = function(socket)
                                                         end)}
 
                                 -- serialize table to string
-                                local response = serialize(responsetab)
+                                local response = serialize_bak(responsetab)
 
                                 -- send response length
                                 local sent = wrapsocket:send(_formatlen(#response))

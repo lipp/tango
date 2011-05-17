@@ -1,16 +1,37 @@
--- sample client 
 require'tango'
 
 -- connects to server (on default port 12345)
-local client = tango.client('localhost')
+local client = tango.client('localhost',12345,{calltimeout=1})
 
--- call print_table on the server side with
--- some table content
-client.print_table{number=444,name='horst'}
+-- echo test
+local tab = {number=444,name='horst',bool=true}
+local tab2 = client.echo(tab)
+assert(tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool)
 
--- call print_table on the server side with
--- wrong argument type (non table)
-ok,err = pcall(function()client.print_table(1)end)
+-- add test
+assert(client.add(1,2)==3)
 
--- and assert error
-assert(ok==false and err:find('type_error'))
+-- string error test
+local status,msg = pcall(function()client.strerror('test')end)
+assert(status==false and msg:find('test'))
+
+-- multiple return values
+local a,b,c = 1.234,true,{el=11}
+local a2,b2,c2 = client.multi(a,b,c)
+assert(a==a2 and b==b2 and c.el==c2.el)
+
+-- timeout
+local status,msg = pcall(function()client.sleep(2)end)
+assert(status==false and msg:find('timeout'))
+
+-- timeout with tango.pcall
+local status,msg,tangoerr = tango.pcall(function()client.sleep(2) end) 
+assert(status==false and tangoerr.source=='socket' and tangoerr.value=='timeout')
+
+local client = tango.client('localhost',12345) 
+-- pcall
+local status,msg,tangoerr = pcall(function()client.strerror('test')end)
+assert(status==false and msg:find('test') and tangoerr==nil)
+
+-- add test
+assert(client.add(1,2)==3)

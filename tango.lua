@@ -112,10 +112,10 @@ call = function(proxy,...)
               rawget(proxy,'path'),
               {...}
            }
---           local options = rawget(proxy,'options')
+           local options = rawget(proxy,'options')
            local socket = rawget(proxy,'socket')
-           local comtimeout = rawget(proxy,'comtimeout') 
-           local calltimeout = rawget(proxy,'calltimeout') 
+           local comtimeout = options.comtimeout
+           local calltimeout = options.calltimeout
            if comtimeout ~= calltimeout then
               socket:settimeout(comtimeout)
            end
@@ -171,10 +171,9 @@ call = function(proxy,...)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 -- @see client
 proxy = function(socket,options,path)
-           options.socket = socket
-           options.path = path
-           return setmetatable( 
-             options,{
+          return setmetatable( {options=options,
+                                path=path,
+                                socket=socket},{
                --- Private helper.
                -- Called when dot operator is invoked on proxy
                -- to access function or table

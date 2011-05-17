@@ -13,7 +13,7 @@ strerror = function(err)
               error(err)
            end
 
-customerr = function(err)
+customerror = function(err)
                error(err)
             end
 

@@ -35,3 +35,7 @@ assert(status==false and msg:find('test') and tangoerr==nil)
 
 -- add test
 assert(client.add(1,2)==3)
+
+local errtab = {code=117}
+local status,errtab2 = pcall(function()client.customerror(errtab)end)
+assert(status==false and errtab2.code==errtab.code)

@@ -1,15 +1,15 @@
-require'socket'
-require'copas'
-require'coxpcall'
+local socket = require'socket'
+local copas = require'copas'
+local coxpcall = require'coxpcall'
 
 -- private helpers
-local _tinsert = table.insert
-local _tconcat = table.concat
-local _tremove = table.remove
-local _smatch = string.match
-local _sgmatch = string.gmatch
-local _sgsub = string.gsub
-local _sformat = string.format
+local tinsert = table.insert
+local tconcat = table.concat
+local tremove = table.remove
+local smatch = string.match
+local sgmatch = string.gmatch
+local sgsub = string.gsub
+local sformat = string.format
 local copas = copas
 local socket = socket
 local setmetatable = setmetatable
@@ -26,61 +26,67 @@ local print = print
 local loadstring = loadstring
 local unpack = unpack
 
--- to access outer function in the remote call (__call)
-local _G = _G
+-- to access outer function in the proxy remote call (__call)
+local globals = _G
 
 --- A simple and transparent remote procedure module inspired by LuaRPC.
 -- It requires LuaSocket and Copas.
+-- Tango relies on a customizable table serialization. 
 module('tango')
 
+--- error codes
+invalid_path = 1
+no_function = 2
 
 -- private helper for serialize
+-- converts a value to a string, used by @see tango.serialize
 -- copied from http://lua/users.org/wiki/TableUtils
-local _valtostr = function(v)
+local valtostr = function(v)
                     local vtype = type(v)
-                    if "string" == vtype then
-                      v = _sgsub(v,"\n","\\n")
-                      if _smatch(_sgsub(v,"[^'\"]",""),'^"+$') then
+                    if 'string' == vtype then
+                      v = sgsub(v,"\n","\\n")
+                      if smatch(sgsub(v,"[^'\"]",""),'^"+$') then
                         return "'"..v.."'"
                       end
-                      return '"'.._sgsub(v,'"','\\"')..'"'
+                      return '"'..sgsub(v,'"','\\"')..'"'
                     else
-                      return "table" == vtype and serialize(v) or tostring(v)
+                      return 'table' == vtype and serialize(v) or tostring(v)
                     end
                   end
 
 -- private helper for serialize
+-- converts a key to a string, used by @see tango.serialize
 -- copied from http://lua/users.org/wiki/TableUtils
-local _keytostr = function(k)
-                    if "string" == type(k) and _smatch(k,"^[_%a][_%a%d]*$") then
+local keytostr = function(k)
+                    if 'string' == type(k) and smatch(k,"^[_%a][_%a%d]*$") then
                       return k
                     else
-                      return "[".._valtostr(k).."]"
+                      return '['..valtostr(k)..']'
                     end
                   end
 
---- Default serializer.
+--- Default table serializer.
 -- Implementation copied from http://lua/users.org/wiki/TableUtils.
 -- May be overwritten for custom serialization (function must take a table and return a string).
 -- @param tbl the table to be serialized
 -- @return the serialized table as string
 -- @usage tango.serialize = table.marshal (using lua-marshal as serializer)
 serialize = function(tbl)
-              local result, done = {}, {}
+              local result,done = {},{}
               for k,v in ipairs(tbl) do
-                _tinsert(result,_valtostr(v))
+                tinsert(result,valtostr(v))
                 done[k] = true
               end
               for k,v in pairs(tbl) do
                 if not done[k] then
-                  _tinsert(result,_keytostr(k).."=".._valtostr(v))
+                  tinsert(result,keytostr(k)..'='..valtostr(v))
                 end
               end
-              return "{".._tconcat(result,",").."}"
+              return '{'..tconcat(result,',')..'}'
             end
 
---- Default unserializer.
--- May be overwritten for custom serialization.
+--- Default table unserializer.
+-- May be overwritten with custom serialization.
 -- Unserializer must take a string as argument and return a table.
 -- @param strtbl the serialized table as string
 -- @return the unserialized table
@@ -96,19 +102,79 @@ unserialize = function(strtab)
 tabmaxdecimals = 12
 
 --- private helper
-local _formatlen = function(len)
-                     return _sformat("%"..tabmaxdecimals.."d",len)
+local formatlen = function(len)
+                     return sformat('%'..tabmaxdecimals..'d',len)
                    end
 
-
+call = function(proxy,...)
+           -- wrap the proxy path and the variable arguments into a table
+           local request = serialize{
+              rawget(proxy,'path'),
+              {...}
+           }
+--           local options = rawget(proxy,'options')
+           local socket = rawget(proxy,'socket')
+           local comtimeout = rawget(proxy,'comtimeout') 
+           local calltimeout = rawget(proxy,'calltimeout') 
+           if comtimeout ~= calltimeout then
+              socket:settimeout(comtimeout)
+           end
+           -- send tabmaxdecimals ascii coded length
+           local sent,err = socket:send(formatlen(#request))
+           if not sent then
+              -- propagate error
+              error('tango error socket.send:'..err)
+           end
+           -- send the table
+           sent,err = socket:send(request)
+           if not sent then
+              -- propagate error
+              error('tango error socket.send:'..err)
+           end
+           
+           -- receive/wait on answer
+           if comtimeout ~= calltimeout then
+              socket:settimeout(calltimeout)
+           end
+           local responselen,err = socket:receive(tabmaxdecimals)
+           if not responselen then
+              -- propagate error
+              error('tango error socket.receive:'..err)
+              return 
+           end
+           
+           -- convert ascii len to number of bytes
+           responselen = tonumber(responselen)
+           if not responselen then
+              -- propagate error
+              error('response format error')
+              return 
+           end
+           
+           if comtimeout ~= calltimeout then
+              socket:settimeout(comtimeout)
+           end
+           -- receive the response
+           local response,err = socket:receive(responselen)
+           if not response then
+              -- propagate error
+              error(err)
+              return 
+           end
+           
+           -- unserialize into a table
+           return unserialize(response)
+        end
 
 --- Private helper. Do not use directly, use client function instead.
 -- Create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 -- @see client
-_proxy = function(socket,functionpath)
+proxy = function(socket,options,path)
+           options.socket = socket
+           options.path = path
            return setmetatable( 
-             {},{
+             options,{
                --- Private helper.
                -- Called when dot operator is invoked on proxy
                -- to access function or table
@@ -120,14 +186,14 @@ _proxy = function(socket,functionpath)
                            -- if proxy is not yet created, create proxy
                            if not proxytab then 
                              -- make deep copy of old fpath
-                             local newfunctionpath
-                             if not functionpath then
-                               newfunctionpath = key
+                             local newpath
+                             if not path then
+                               newpath = key
                              else
-                               newfunctionpath = functionpath..'.'..key
+                               newpath = path..'.'..key
                              end
                              -- call proxy constructor
-                             proxytab = _proxy(socket,newfunctionpath)
+                             proxytab = proxy(socket,options,newpath)
                              -- store proxytab for next __index call
                              rawset(self,key,proxytab)
                            end                            
@@ -140,62 +206,22 @@ _proxy = function(socket,functionpath)
                -- @param self the proxy
                -- @param ... variable argument list
                __call = function(self,...)
-                          -- wrap the functionparh and the variable arguments into a table
-                          local request = serialize{
-                            functionpath,
-                            {...}
-                          }
-                          -- send tabmaxdecimalsgth ascii coded length
-                          local sent,err = socket:send(_formatlen(#request))
-                          if not sent then
-                            -- propagate error
-                            error(err)
-                          end
-                          -- send the table
-                          sent,err = socket:send(request)
-                          if not sent then
-                            -- propagate error
-                            error(err)
-                          end
-
-                          -- receive/wait on answer
-                          local responselen,err = socket:receive(tabmaxdecimals)
-                          if not responselen then
-                            -- propagate error
-                            error(err)
-                            return 
-                          end
-
-                          -- convert ascii len to number of bytes
-                          responselen = tonumber(responselen)
-                          if not responselen then
-                            -- propagate error
-                            error("response format error")
-                            return 
-                          end
-
-                          -- receive the response
-                          local response,err = socket:receive(responselen)
-                          if not response then
-                            -- propagate error
-                            error(err)
-                            return 
-                          end
-                          
-                          -- unserialize into a table
-                          local responsetab = unserialize(response)
-                          -- the response table contains the {pcall(...)} table from the server 
-                          if responsetab[1] == true then
-                            _tremove(responsetab,1)
-                            -- return all results
-                            return unpack(responsetab)
-                          else
-                            -- propagate error
-                            error(responsetab[2])
-                          end                                                      
+                           local resulttab = call(self,...)
+                           if resulttab[1] == true then
+                              tremove(resulttab,1)
+                              -- return all results
+                              return unpack(resulttab)
+                           else
+                              -- propagate error
+                              error(resulttab[2])
+                           end                                                      
                         end
              })
-         end
+        end
+
+pcall = function(proxy,...)
+           return unpack(call(proxy,...))
+        end
 
 --- Returns a proxy to the specified client.
 -- Invoke remote functions on the returned variable.
@@ -208,14 +234,16 @@ _proxy = function(socket,functionpath)
 -- @param options
 client = function(adr,port,options)
            local options = options or {}
+           options.comtimeout = options.comtimeout or 5000
+           options.calltimeout = options.calltimeout or 5000
            local sock = socket.tcp()
-           sock:settimeout(options.timeout or 5000)
+           sock:settimeout(options.comtimeout)
            sock:setoption('tcp-nodelay',true)
            local ok,err = sock:connect(adr,port or 12345)
            if not ok then
              return nil,err
            end
-           return _proxy(sock)
+           return proxy(sock,options)
          end
 
 --- Returns a copas compatible server, which holds the connection and 
@@ -244,30 +272,52 @@ copasserver = function(socket)
 
                   -- method 
                   ok,callerr = copcall(function()    
-                                         -- backing up serialization to allow serialization exchange                                     
-                                         local unserialize_bak = unserialize
-                                         local serialize_bak = serialize
+                                         -- backing up serialization to allow serialization exchange
+                                         local unserialize = unserialize
+                                         local serialize = serialize
                                          
-                                         local requesttab = unserialize_bak(request)
-                                         -- grab global table as root table
-                                         local func = _G
-                                         -- iterate over fpath and search corresponding tab
-                                         -- requesttab[1] contains functionpath, e.g. 'a.b.c.d'
-                                         for part in _sgmatch(requesttab[1],"[%w_]+") do
-                                           func = func[part] 
+                                         local requesttab = unserialize(request)
+                                         -- grab global table as root 
+                                         local func = globals
+                                         -- iterate over path and search corresponding tab
+                                         -- requesttab[1] contains the proxy path, e.g. 'a.b.c.d'
+                                         local errtab = nil
+                                         local path = requesttab[1]
+                                         for pathpart in sgmatch(path,'[%w_]+') do
+                                            if type(func) == 'table' and func[pathpart] then
+                                               func = func[pathpart]
+                                            else
+                                               errtab = {source='tango',
+                                                         code=invalid_path,
+                                                         desc='invalid proxy path: '..path,
+                                                         value=path}
+                                            end  
                                          end
-                                         -- call the function and collect all return values in table
-                                         -- requesttab[2] contains the arguments as table
-                                         local responsetab = {copcall(
-                                                                function()
-                                                                  return func(unpack(requesttab[2]))
-                                                                end)}
+                                         
+                                         if not errtab and type(func) ~= 'function' then
+                                            errtab = {source='tango',
+                                                      code=no_function,
+                                                      desc='proxy path is not a function: '..path,
+                                                      value=path}
+                                         end
+
+                                         local responsetab = nil
+                                         if errtab then
+                                            responsetab = {false,errtab.desc,errtab}
+                                         else
+                                            -- call the function and collect all return values in table
+                                            -- requesttab[2] contains the arguments as table
+                                            responsetab = {copcall(
+                                                              function()
+                                                                 return func(unpack(requesttab[2]))
+                                                              end)}
+                                         end
 
                                          -- serialize table to string
-                                         local response = serialize_bak(responsetab)
+                                         local response = serialize(responsetab)
 
                                          -- send response length
-                                         local sent = wrapsocket:send(_formatlen(#response))
+                                         local sent = wrapsocket:send(formatlen(#response))
                                          if not sent then
                                            return 
                                          end                                
@@ -284,8 +334,9 @@ copasserver = function(socket)
               end
 
 
---- Starts a copas server with tango.copasserver.
+--- Starts a tango stand-alone server.
 -- For standalone usage of tango server, never returns.
+-- To use a server in 'parallel' with other copas service call manually copas.addserver(...,tango.copasserver)
 -- @param port server will bind the all interfaces on the specified port (default 12345)
 serve = function(port)
           copas.addserver(socket.bind('*',port or 12345),copasserver)

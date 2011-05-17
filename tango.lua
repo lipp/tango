@@ -21,10 +21,12 @@ local type = type
 local tostring = tostring
 local tonumber = tonumber
 local copcall = copcall
+local gpcall = pcall
 local error = error
 local print = print
 local loadstring = loadstring
 local unpack = unpack
+local assert = assert
 
 -- to access outer function in the proxy remote call (__call)
 local globals = _G
@@ -123,13 +125,21 @@ call = function(proxy,...)
            local sent,err = socket:send(formatlen(#request))
            if not sent then
               -- propagate error
-              error('tango error socket.send:'..err)
+              local desc = 'tango error in socket.send:'..err
+              return {false,desc,{source='socket',
+                                  code=invalid_path,
+                                  desc=desc,
+                                  value=err}}
            end
            -- send the table
            sent,err = socket:send(request)
            if not sent then
               -- propagate error
-              error('tango error socket.send:'..err)
+              local desc = 'tango error in socket.send:'..err
+              return {false,desc,{source='socket',
+                                  code=invalid_path,
+                                  desc=desc,
+                                  value=err}}
            end
            
            -- receive/wait on answer
@@ -139,16 +149,22 @@ call = function(proxy,...)
            local responselen,err = socket:receive(tabmaxdecimals)
            if not responselen then
               -- propagate error
-              error('tango error socket.receive:'..err)
-              return 
+              local desc = 'tango error in socket.receive:'..err
+              return {false,desc,{source='socket',
+                                  code=invalid_path,
+                                  desc=desc,
+                                  value=err}}
            end
            
            -- convert ascii len to number of bytes
            responselen = tonumber(responselen)
            if not responselen then
               -- propagate error
-              error('response format error')
-              return 
+              local desc = 'tango error in socket.send:'..err
+              return {false,desc,{source='tango',
+                                  code=invalid_path,
+                                  desc=desc,
+                                  value=path}}
            end
            
            if comtimeout ~= calltimeout then
@@ -157,14 +173,19 @@ call = function(proxy,...)
            -- receive the response
            local response,err = socket:receive(responselen)
            if not response then
-              -- propagate error
-              error(err)
-              return 
+              local desc = 'tango error in socket.receive:'..err
+              return {false,desc,{source='socket',
+                                  code=invalid_path,
+                                  desc=desc,
+                                  value=err}}
            end
            
            -- unserialize into a table
            return unserialize(response)
         end
+
+--errmode = 'tango.pcall'
+errmode = 'default'
 
 --- Private helper. Do not use directly, use client function instead.
 -- Create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
@@ -206,20 +227,28 @@ proxy = function(socket,options,path)
                -- @param ... variable argument list
                __call = function(self,...)
                            local resulttab = call(self,...)
-                           if resulttab[1] == true then
+                           local status = resulttab[1]
+                           if status == true then
                               tremove(resulttab,1)
-                              -- return all results
                               return unpack(resulttab)
                            else
-                              -- propagate error
-                              error(resulttab[2])
-                           end                                                      
+                              if errmode == 'tango.pcall' then
+                                 error(resulttab)
+                              else
+                                 error(resulttab[2])
+                              end
+                           end
                         end
              })
         end
 
-pcall = function(proxy,...)
-           return unpack(call(proxy,...))
+pcall = function(f,...)
+           errmode = 'tango.pcall'
+           local _,resulttab = gpcall(f,...)
+           errmode = 'default'
+           if resulttab then
+              return unpack(resulttab)
+           end
         end
 
 --- Returns a proxy to the specified client.

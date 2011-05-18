@@ -160,11 +160,11 @@ call = function(proxy,...)
            responselen = tonumber(responselen)
            if not responselen then
               -- propagate error
-              local desc = 'tango error in socket.send:'..err
+              local desc = 'tango error in protocol, number expected, got '..responselen
               return {false,desc,{source='tango',
-                                  code=invalid_path,
+                                  code=protocol_error,
                                   desc=desc,
-                                  value=path}}
+                                  value=response_len}}
            end
            
            if comtimeout ~= calltimeout then

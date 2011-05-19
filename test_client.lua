@@ -26,7 +26,7 @@ assert(status==false and msg:find('timeout'))
 
 print('timeout with tango.pcall')
 local status,msg,tangoerr = tango.pcall(function()client.sleep(2) end) 
-assert(status==false and tangoerr.source=='socket' and tangoerr.value=='timeout')
+assert(status==false and tangoerr.type=='timeout' and tangoerr.code==tango.calltimeout_error and tangoerr.path=='sleep')
 
 -- connection errors and timeouts require a 'reconnect'
 local client = tango.client('localhost',12345) 
@@ -47,9 +47,9 @@ assert(client.nested.method.name()==true)
 
 print('not existing proxy paths')
 local status,msg = pcall(function()client.notexisting()end)
-assert(status==false and msg:find('invalid') and msg:find('path'))
+assert(status==false and msg:find('notexisting') and msg:find('path'))
 
 print('not existing proxy path with tango.pcall')
 local status,msg,tangoerr = tango.pcall(function()client.notexisting() end) 
-assert(status==false and tangoerr.source=='tango' and 
-       tangoerr.value=='notexisting' and tangoerr.code==tango.invalid_path)
+assert(status==false and tangoerr.type=='server' and 
+       tangoerr.code==tango.path_error and tangoerr.path=='notexisting')

@@ -36,36 +36,32 @@ local globals = _G
 -- Tango relies on a customizable table serialization. 
 module('tango')
 
---- error codes
-invalid_path = 1
-no_function = 2
-
 -- private helper for serialize
 -- converts a value to a string, used by @see tango.serialize
 -- copied from http://lua/users.org/wiki/TableUtils
 local valtostr = function(v)
-                    local vtype = type(v)
-                    if 'string' == vtype then
-                      v = sgsub(v,"\n","\\n")
-                      if smatch(sgsub(v,"[^'\"]",""),'^"+$') then
-                        return "'"..v.."'"
-                      end
-                      return '"'..sgsub(v,'"','\\"')..'"'
-                    else
-                      return 'table' == vtype and serialize(v) or tostring(v)
-                    end
-                  end
+                   local vtype = type(v)
+                   if 'string' == vtype then
+                     v = sgsub(v,"\n","\\n")
+                     if smatch(sgsub(v,"[^'\"]",""),'^"+$') then
+                       return "'"..v.."'"
+                     end
+                     return '"'..sgsub(v,'"','\\"')..'"'
+                   else
+                     return 'table' == vtype and serialize(v) or tostring(v)
+                   end
+                 end
 
 -- private helper for serialize
 -- converts a key to a string, used by @see tango.serialize
 -- copied from http://lua/users.org/wiki/TableUtils
 local keytostr = function(k)
-                    if 'string' == type(k) and smatch(k,"^[_%a][_%a%d]*$") then
-                      return k
-                    else
-                      return '['..valtostr(k)..']'
-                    end
-                  end
+                   if 'string' == type(k) and smatch(k,"^[_%a][_%a%d]*$") then
+                     return k
+                   else
+                     return '['..valtostr(k)..']'
+                   end
+                 end
 
 --- Default table serializer.
 -- Implementation copied from http://lua/users.org/wiki/TableUtils.
@@ -105,150 +101,204 @@ tabmaxdecimals = 12
 
 --- private helper
 local formatlen = function(len)
-                     return sformat('%'..tabmaxdecimals..'d',len)
+                    return sformat('%'..tabmaxdecimals..'d',len)
+                  end
+
+--- error codes
+send_error = 1
+receive_error = 2
+comtimeout_error = 3
+calltimeout_error = 4
+path_error = 5
+nofunction_error = 6
+protocol_error = 7
+
+
+local throw = function(errtab,level)
+                if throwtable == true then
+                  errtab.tangoerr = true
+                  error(errtab,level or 1)
+                else
+                  error(errtab.desc,level or 1)
+                end
+              end
+
+local throw_send_error = function(path,err)                           
+                           if err == 'timeout' then
+                             throw_comtimeout_error(path,'socket.send')
+                           end                           
+                           throw({type = 'socket',
+                                  code = send_error,
+                                  desc = 'tango socket.send error:'..err,
+                                  path = path},2)
+                         end
+
+local throw_comtimeout_error = function(path,method)
+                                 throw({type = 'timeout',
+                                        code = comtimeout_error,
+                                        desc = 'tango comtimeout error during '..method,
+                                        path = path},3)
+                               end
+
+local throw_calltimeout_error = function(path)
+                                  throw({type = 'timeout',
+                                         code = calltimeout_error,
+                                         desc = 'tango calltimeout during call to:'..path,
+                                         path = path},2)
+                                end
+
+local throw_protocol_error = function(path,err)    
+                               throw({type = 'protocol',
+                                      code = protocol_error,
+                                      desc = 'tango protocol error:'..err,
+                                      path = path},2)
+                             end
+
+local throw_receive_error = function(path,err)                           
+                              if err == 'timeout' and awaiting_call then
+                                throw_comtimeout_error(path,'socket.receive')
+                              end
+                              throw({type = 'socket',
+                                     code = receive_error,
+                                     desc = 'tango socket.receive error:'..err,
+                                     path = path},2)
+                            end
+
+--local throw_server_error = function(err)
+--                             throw(err
+--                           end
+
+local path_error = function(path)                           
+                     return {type = 'server',
+                             code = path_error,
+                             desc = 'tango server could not resolve path:'..path,
+                             path = path}
                    end
 
-call = function(proxy,...)
-           -- wrap the proxy path and the variable arguments into a table
-           local request = serialize{
-              rawget(proxy,'path'),
-              {...}
-           }
-           local options = rawget(proxy,'options')
-           local socket = rawget(proxy,'socket')
-           local comtimeout = options.comtimeout
-           local calltimeout = options.calltimeout
-           if comtimeout ~= calltimeout then
-              socket:settimeout(comtimeout)
-           end
-           -- send tabmaxdecimals ascii coded length
-           local sent,err = socket:send(formatlen(#request))
-           if not sent then
-              -- propagate error
-              local desc = 'tango error in socket.send:'..err
-              return {false,desc,{source='socket',
-                                  code=invalid_path,
-                                  desc=desc,
-                                  value=err}}
-           end
-           -- send the table
-           sent,err = socket:send(request)
-           if not sent then
-              -- propagate error
-              local desc = 'tango error in socket.send:'..err
-              return {false,desc,{source='socket',
-                                  code=invalid_path,
-                                  desc=desc,
-                                  value=err}}
-           end
-           
-           -- receive/wait on answer
-           if comtimeout ~= calltimeout then
-              socket:settimeout(calltimeout)
-           end
-           local responselen,err = socket:receive(tabmaxdecimals)
-           if not responselen then
-              -- propagate error
-              local desc = 'tango error in socket.receive:'..err
-              return {false,desc,{source='socket',
-                                  code=invalid_path,
-                                  desc=desc,
-                                  value=err}}
-           end
-           
-           -- convert ascii len to number of bytes
-           responselen = tonumber(responselen)
-           if not responselen then
-              -- propagate error
-              local desc = 'tango error in protocol, number expected, got '..responselen
-              return {false,desc,{source='tango',
-                                  code=protocol_error,
-                                  desc=desc,
-                                  value=response_len}}
-           end
-           
-           if comtimeout ~= calltimeout then
-              socket:settimeout(comtimeout)
-           end
-           -- receive the response
-           local response,err = socket:receive(responselen)
-           if not response then
-              local desc = 'tango error in socket.receive:'..err
-              return {false,desc,{source='socket',
-                                  code=invalid_path,
-                                  desc=desc,
-                                  value=err}}
-           end
-           
-           -- unserialize into a table
-           return unserialize(response)
-        end
-
---errmode = 'tango.pcall'
-errmode = 'default'
+local nofunction_error = function(path)                           
+                           return {type = 'server',
+                                   code = nofunction_error,
+                                   desc = 'tango server path does not resolve to function:'..path,
+                                   path = path}
+                         end
 
 --- Private helper. Do not use directly, use client function instead.
 -- Create a rpc proxy which operates on the socket provided (socket is not allowed to be copas.wrap'ed)
 -- functionpath is used internally and should not be assigned by users (addresses the remote function and may look like "a.b.c")
 -- @see client
 proxy = function(socket,options,path)
-          return setmetatable( {options=options,
-                                path=path,
-                                socket=socket},{
-               --- Private helper.
-               -- Called when dot operator is invoked on proxy
-               -- to access function or table
-               -- @param self the parent proxy
-               -- @param key the proxy / remote table key to index
-               __index = function(self,key)
-                           -- look up if proxy already exists
-                           local proxytab = rawget(self,key)
-                           -- if proxy is not yet created, create proxy
-                           if not proxytab then 
-                             -- make deep copy of old fpath
-                             local newpath
-                             if not path then
-                               newpath = key
-                             else
-                               newpath = path..'.'..key
-                             end
-                             -- call proxy constructor
-                             proxytab = proxy(socket,options,newpath)
-                             -- store proxytab for next __index call
-                             rawset(self,key,proxytab)
-                           end                            
-                           return proxytab
-                         end,
+          return setmetatable( 
+            {options=options,
+             path=path,
+             socket=socket},{
+              --- Private helper.
+              -- Called when dot operator is invoked on proxy
+              -- to access function or table
+              -- @param self the parent proxy
+              -- @param key the proxy / remote table key to index
+              __index = function(self,key)
+                          -- look up if proxy already exists
+                          local proxytab = rawget(self,key)
+                          -- if proxy is not yet created, create proxy
+                          if not proxytab then 
+                            -- make deep copy of old fpath
+                            local newpath
+                            if not path then
+                              newpath = key
+                            else
+                              newpath = path..'.'..key
+                            end
+                            -- call proxy constructor
+                            proxytab = proxy(socket,options,newpath)
+                            -- store proxytab for next __index call
+                            rawset(self,key,proxytab)
+                          end                            
+                          return proxytab
+                        end,
 
-               --- Private helper.
-               -- When trying to invoke functions on the proxy, this method will be called
-               -- wraps the variable arguments into a table and transmits them to the server 
-               -- @param self the proxy
-               -- @param ... variable argument list
-               __call = function(self,...)
-                           local resulttab = call(self,...)
-                           local status = resulttab[1]
-                           if status == true then
-                              tremove(resulttab,1)
-                              return unpack(resulttab)
+              --- Private helper.
+              -- When trying to invoke functions on the proxy, this method will be called
+              -- wraps the variable arguments into a table and transmits them to the server 
+              -- @param self the proxy
+              -- @param ... variable argument list
+              __call = function(self,...)
+                         local path = rawget(self,'path')
+                         -- wrap the proxy path and the variable arguments into a table and serialize it
+                         local request = serialize{path,{...}}
+                         local options = rawget(self,'options')
+                         local socket = rawget(self,'socket')
+                         local comtimeout = options.comtimeout
+                         local calltimeout = options.calltimeout
+                         if comtimeout ~= calltimeout then
+                           socket:settimeout(comtimeout)
+                         end
+                         -- send tabmaxdecimals ascii coded length
+                         local sent,err = socket:send(formatlen(#request))
+                         if not sent then
+                           throw_send_error(path,err)
+                         end
+                         -- send the actual table data
+                         sent,err = socket:send(request)
+                         if not sent then
+                           throw_send_error(path,err)
+                         end
+                         -- receive/wait on answer
+                         if comtimeout ~= calltimeout then
+                           socket:settimeout(calltimeout)
+                         end
+                         local responselen,err = socket:receive(tabmaxdecimals)                         
+                         if not responselen then
+                           if err == 'timeout' then
+                             throw_calltimeout_error(path)
                            else
-                              if errmode == 'tango.pcall' then
-                                 error(resulttab)
-                              else
-                                 error(resulttab[2])
-                              end
+                             throw_receive_error(path,err)
                            end
-                        end
-             })
+                         end                         
+                         -- convert ascii len to number of bytes
+                         responselen = tonumber(responselen)
+                         if not responselen then
+                           throw_protocol_error(path,'length as ascii number string not ok')
+                         end                       
+                         if comtimeout ~= calltimeout then
+                           socket:settimeout(comtimeout)
+                         end
+                         -- receive the actual response table dataa
+                         local response,err = socket:receive(responselen)
+                         if not response then
+                           throw_receive_error(path,err)
+                         end
+                         
+                         -- unserialize into a table
+                         local responsetab = unserialize(response)
+                         if responsetab[1] == true then
+                           tremove(responsetab,1)
+                           return unpack(responsetab)                           
+                         elseif responsetab[2] then
+                           -- 'normal' error simply forward
+                           error(responsetab[2])
+                         else
+                           throw(responsetab[3])
+                         end
+                       end
+            })
         end
 
+
 pcall = function(f,...)
-           errmode = 'tango.pcall'
-           local _,resulttab = gpcall(f,...)
-           errmode = 'default'
-           if resulttab then
-              return unpack(resulttab)
-           end
+          -- changes behaviour of throw to 'error' tables in case of tange errors
+          throwtable = true
+          local result = {gpcall(f,...)}
+          -- changes behaviour of throw to 'error' strings
+          throwtable = false
+          if result[1] == true then
+            return unpack(resulttab)
+          else 
+            local err = result[2] 
+            if type(err) == 'table' and err.tangoerr and err.code then
+              return false,err.desc,err
+            end
+            return false,err
+          end
         end
 
 --- Returns a proxy to the specified client.
@@ -282,6 +332,35 @@ copasserver = function(socket)
                 socket:setoption('tcp-nodelay',true)
                 local ok,callerr
                 
+                local servercall = function(requesttab)
+                                     -- grab global table as root 
+                                     local func = globals
+                                     -- iterate over path and search corresponding tab
+                                     -- requesttab[1] contains the proxy path, e.g. 'a.b.c.d'
+                                     local path = requesttab[1]
+                                     local responsetab = nil
+                                     for pathpart in sgmatch(path,'[%w_]+') do
+                                       if type(func) == 'table' and func[pathpart] then
+                                         func = func[pathpart]
+                                       else
+                                         return {false,nil,path_error(path)}
+                                       end  
+                                     end
+                                     
+                                     if type(func) ~= 'function' then
+                                       return {false,nil,nofunction_error(path)}
+                                     end
+                                     
+                                     -- call the function and collect all return values in table
+                                     -- requesttab[2] contains the arguments as table
+                                     return {copcall(
+                                               function()
+                                                 return func(unpack(requesttab[2]))
+                                               end)}                                       
+                                   end
+                  
+
+                
                 -- wrap to allow copas to yield / let other asznc services run
                 local wrapsocket = copas.wrap(socket)
                 repeat 
@@ -291,7 +370,7 @@ copasserver = function(socket)
                     return 
                   end
                   local requestlen = tonumber(requestlen)
-
+                  
                   -- read request
                   local request = wrapsocket:receive(requestlen)
                   if not request then
@@ -302,48 +381,8 @@ copasserver = function(socket)
                   ok,callerr = copcall(function()    
                                          -- backing up serialization to allow serialization exchange
                                          local unserialize = unserialize
-                                         local serialize = serialize
-                                         
-                                         local requesttab = unserialize(request)
-                                         -- grab global table as root 
-                                         local func = globals
-                                         -- iterate over path and search corresponding tab
-                                         -- requesttab[1] contains the proxy path, e.g. 'a.b.c.d'
-                                         local errtab = nil
-                                         local path = requesttab[1]
-                                         for pathpart in sgmatch(path,'[%w_]+') do
-                                            if type(func) == 'table' and func[pathpart] then
-                                               func = func[pathpart]
-                                            else
-                                               errtab = {source='tango',
-                                                         code=invalid_path,
-                                                         desc='invalid proxy path: '..path,
-                                                         value=path}
-                                            end  
-                                         end
-                                         
-                                         if not errtab and type(func) ~= 'function' then
-                                            errtab = {source='tango',
-                                                      code=no_function,
-                                                      desc='proxy path is not a function: '..path,
-                                                      value=path}
-                                         end
-
-                                         local responsetab = nil
-                                         if errtab then
-                                            responsetab = {false,errtab.desc,errtab}
-                                         else
-                                            -- call the function and collect all return values in table
-                                            -- requesttab[2] contains the arguments as table
-                                            responsetab = {copcall(
-                                                              function()
-                                                                 return func(unpack(requesttab[2]))
-                                                              end)}
-                                         end
-
-                                         -- serialize table to string
-                                         local response = serialize(responsetab)
-
+                                         local serialize = serialize                                         
+                                         local response = serialize(servercall(unserialize(request)))                                         
                                          -- send response length
                                          local sent = wrapsocket:send(formatlen(#response))
                                          if not sent then
@@ -360,8 +399,9 @@ copasserver = function(socket)
                 until ok == false
                 print(callerr)
               end
+           
 
-
+              
 --- Starts a tango stand-alone server.
 -- For standalone usage of tango server, never returns.
 -- To use a server in 'parallel' with other copas service call manually copas.addserver(...,tango.copasserver)

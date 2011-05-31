@@ -164,9 +164,6 @@ local throw_receive_error = function(path,err)
                                      path = path},2)
                             end
 
---local throw_server_error = function(err)
---                             throw(err
---                           end
 
 local path_error = function(path)                           
                      return {type = 'server',
@@ -283,7 +280,11 @@ proxy = function(socket,options,path)
             })
         end
 
-
+--- For programmatically handle tango errors.
+-- Behaves as normal pcall but returns additional tango error table in case of error.
+-- @return As pcall would. In case of a tango error, a third return value is given. @see throw and throw_xyz
+-- for possible table content.
+-- @usage status,msg,tangoerr=tango.pcall(function() proxy.risky_business(arg) end); if tangoerr then ...
 pcall = function(f,...)
           -- changes behaviour of throw to 'error' tables in case of tange errors
           throwtable = true

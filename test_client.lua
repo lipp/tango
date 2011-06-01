@@ -1,55 +1,99 @@
 require'tango'
 
--- connects to server (on default port 12345)
-local client = tango.client('localhost',12345,{calltimeout=1})
+local connect = function()
+                  return tango.client('localhost',12345,{calltimeout=0.01})
+                end
 
-print('echo test')
-local tab = {number=444,name='horst',bool=true}
-local tab2 = client.echo(tab)
-assert(tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool)
+local test = function(txt,f)
+               io.write(txt..' ... ')
+               local ret = f()
+               if ret and ret ~= false  then
+                 io.write('ok\n')
+               else
+                 io.write('failed\n')
+               end
+             end
 
-print('add test')
-assert(client.add(1,2)==3)
+local client = connect()
 
-print('string error test')
-local status,msg = pcall(function()client.strerror('test')end)
-assert(status==false and msg:find('test'))
+test('echo test',
+     function()
+       local tab = {number=444,name='horst',bool=true}
+       local tab2 = client.echo(tab)
+       return tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool
+     end)
 
-print('multiple return values')
-local a,b,c = 1.234,true,{el=11}
-local a2,b2,c2 = client.multi(a,b,c)
-assert(a==a2 and b==b2 and c.el==c2.el)
+test('add test',
+     function()
+       return client.add(1,2)==3
+     end)
 
-print('timeout test')
-local status,msg = pcall(function()client.sleep(2)end)
-assert(status==false and msg:find('timeout'))
+test('string error test',
+     function()
+       local status,msg = pcall(function()client.strerror('testmessage')end)
+       return status==false and msg:find('testmessage')
+     end)
 
-print('timeout with tango.pcall')
-local status,msg,tangoerr = tango.pcall(function()client.sleep(2) end) 
-assert(status==false and tangoerr.type=='timeout' and tangoerr.code==tango.calltimeout_error and tangoerr.path=='sleep')
+test('multiple return values',
+     function()
+       local a,b,c = 1.234,true,{el=11}
+       local a2,b2,c2 = client.multi(a,b,c)
+       return a==a2 and b==b2 and c.el==c2.el
+     end)
 
+test('timeout test',
+     function()
+       local status,msg = pcall(function()client.msleep(100)end)
+       return status==false and msg:find('timeout')
+     end)
+
+-- 'resync' with server (server maybe still sleeping!!!)
+io.popen('sleep 0.1'):read()
 -- connection errors and timeouts require a 'reconnect'
-local client = tango.client('localhost',12345) 
-print('pcall test')
-local status,msg,tangoerr = pcall(function()client.strerror('test')end)
-assert(status==false and msg:find('test') and tangoerr==nil)
+local client = connect()
 
-print('add test')
-assert(client.add(1,2)==3)
+test('timeout with tango.pcall',
+     function()
+       local status,msg,tangoerr = tango.pcall(function()client.msleep(100) end)        
+       return status==false and tangoerr and tangoerr.code==tango.calltimeout_error and tangoerr.path=='msleep'
+     end)
 
-print('custom error test')
-local errtab = {code=117}
-local status,errtab2 = pcall(function()client.customerror(errtab)end)
-assert(status==false and errtab2.code==errtab.code)
+-- 'resync' with server (server maybe still sleeping!!!)
+io.popen('sleep 0.1'):read()
+-- connection errors and timeouts require a 'reconnect'
+local client = connect()
 
-print('nested method name test')
-assert(client.nested.method.name()==true)
+test('pcall test',
+     function()
+       local status,msg,tangoerr = pcall(function()client.strerror('test')end)
+       return status==false and msg:find('test') and tangoerr==nil
+     end)
 
-print('not existing proxy paths')
-local status,msg = pcall(function()client.notexisting()end)
-assert(status==false and msg:find('notexisting') and msg:find('path'))
+test('add test',
+     function()
+       return client.add(1,2)==3
+     end)
 
-print('not existing proxy path with tango.pcall')
-local status,msg,tangoerr = tango.pcall(function()client.notexisting() end) 
-assert(status==false and tangoerr.type=='server' and 
-       tangoerr.code==tango.path_error and tangoerr.path=='notexisting')
+test('custom error test',
+     function()
+       local errtab = {code=117}
+       local status,errtab2 = pcall(function()client.customerror(errtab)end)
+       return status==false and errtab2.code==errtab.code
+     end)
+
+test('nested method name test',
+     function()
+       return client.nested.method.name()==true
+     end)
+
+test('not existing proxy paths',
+     function()
+       local status,msg = pcall(function()client.notexisting()end) 
+       return status==false and msg:find('notexisting') and msg:find('path')
+     end)
+
+test('not existing proxy path with tango.pcall',
+     function()
+       local status,msg,tangoerr = tango.pcall(function()client.notexisting() end) 
+       return status==false and tangoerr.code==tango.path_error and tangoerr.path=='notexisting'
+     end)

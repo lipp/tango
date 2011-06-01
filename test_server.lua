@@ -21,8 +21,10 @@ multi = function(...)
            return unpack{...}
         end
 
-sleep = function(sec)
-           os.execute('sleep '..sec)
+msleep = function(msec)           
+           local sleepcmd = 'sleep 0.'..string.format('%03d',msec)
+           print(sleepcmd)
+           io.popen(sleepcmd):read()           
         end
 
 nested = {method = {name = function()return true end}}

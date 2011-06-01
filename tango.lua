@@ -409,7 +409,8 @@ copasserver =
 -- specified or nil the global table _G is used.
 serve = 
   function(port,functab)
-    copas.addserver(socket.bind('*',port or 12345),function(socket) copasserver(socket,functab) end)
+    copas.addserver(socket.bind('*',port or 12345),
+                    function(socket) copasserver(socket,functab) end)
     copas.loop()
   end
 

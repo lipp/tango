@@ -1,37 +1,14 @@
 local socket = require'socket'
 local copas = require'copas'
 local coxpcall = require'coxpcall'
+local core = require'tango'
 
 -- private helpers
-local tinsert = table.insert
-local tconcat = table.concat
-local tremove = table.remove
-local smatch = string.match
-local sgmatch = string.gmatch
-local sgsub = string.gsub
 local sformat = string.format
-local copas = copas
-local socket = socket
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local ipairs = ipairs
-local pairs = pairs
-local type = type
-local tostring = tostring
 local tonumber = tonumber
 local copcall = copcall
-local gpcall = pcall
 local error = error
 local print = print
-local loadstring = loadstring
-local unpack = unpack
-local assert = assert
-local proxy = require'tango.proxy'
-local handler = require'tango.handler'
-local serialization = require'tango.serialization'
-local serialize = serialization.serialize
-local unserialize = serialization.unserialize
 
 -- to access outer function in the proxy remote call (__call)
 local globals = _G
@@ -95,7 +72,7 @@ local receive =
 -- @param port the port on which the server listens (default 12345)
 -- @param options
 client = 
-  function(adr,port,timeout)
+  function(adr,port,timeout,type)
     local sock = socket.tcp()
     sock:settimeout(timeout or 5000)
     sock:setoption('tcp-nodelay',true)
@@ -103,15 +80,15 @@ client =
     if not ok then
       return error(err)
     end
-    local send_tab 
-      = function(tab)
-          send(sock,tab)
-        end
-    local receive_tab 
-      = function()
-          return receive(sock)
-        end
-    return proxy.new(send_tab,receive_tab)
+    local transport = {
+      send = function(data)
+               send(sock,data)
+             end,
+      receive = function()
+                  return receive(sock)
+                end
+    }
+    return core.proxy(transport,type or core.call)
   end
 
 --- Returns a copas compatible server, which holds the connection and 
@@ -124,13 +101,13 @@ server =
   function(socket,functab)
     socket:setoption('tcp-nodelay',true)
     local wrapsocket = copas.wrap(socket)
-    -- endless server loop
     while true do
-      -- read length of request as ascii
       local request = receive(wrapsocket)
-      local response = handler.call(request,functab,copcall)
-      send(wrapsocket,response)
-      wrapsocket:flush()
+      local response = core.dispatch(request,functab,copcall)
+      if response then
+        send(wrapsocket,response)
+        wrapsocket:flush()
+      end
     end
   end
 

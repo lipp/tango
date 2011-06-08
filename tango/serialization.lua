@@ -14,13 +14,10 @@ local loadstring = loadstring
 local print = print
 
 --- The default tango serialization module.
--- Neither fast nor compact, but Lua only.
--- It is based on the table serialization at http://lua/users.org/wiki/TableUtils
+-- Uses table serialization from http://lua/users.org/wiki/TableUtils and loadstring for unserialize.
+-- Is neither fast nor compact, but Lua only.
 module('tango.serialization')
 
--- private helper for serialize
--- converts a value to a string, used by @see tango.serialize
--- copied from 
 local valtostr = 
   function(v)
     local vtype = type(v)
@@ -35,9 +32,6 @@ local valtostr =
     end
   end
 
--- private helper for serialize
--- converts a key to a string, used by @see tango.serialize
--- copied from http://lua/users.org/wiki/TableUtils
 local keytostr = 
   function(k)
     if 'string' == type(k) and smatch(k,"^[_%a][_%a%d]*$") then
@@ -47,12 +41,6 @@ local keytostr =
     end
   end
 
---- Default table serializer.
--- Implementation copied from http://lua/users.org/wiki/TableUtils.
--- May be overwritten for custom serialization (function must take a table and return a string).
--- @param tbl the table to be serialized
--- @return the serialized table as string
--- @usage tango.serialize = table.marshal (using lua-marshal as serializer)
 serialize = 
   function(tbl)
     local result,done = {},{}
@@ -68,15 +56,8 @@ serialize =
     return '{'..tconcat(result,',')..'}'
   end
 
---- Default table unserializer.
--- May be overwritten with custom serialization.
--- Unserializer must take a string as argument and return a table.
--- @param strtbl the serialized table as string
--- @return the unserialized table
--- @usage tango.unserialize = table.unmarshal (using lua-marshal as serializer)
 unserialize = 
   function(strtab)
-    -- assuming strtab contains a stringified table
     return loadstring('return '..strtab)()
   end
 

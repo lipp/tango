@@ -4,8 +4,8 @@ local coxpcall = require'coxpcall'
 local core = require'tango'
 
 -- private helpers
-local sformat = string.format
 local tonumber = tonumber
+local tostring = tostring
 local copcall = copcall
 local error = error
 local print = print
@@ -13,26 +13,14 @@ local print = print
 -- to access outer function in the proxy remote call (__call)
 local globals = _G
 
---- A simple and transparent remote procedure module inspired by LuaRPC.
+--- A copas compatible transport backend for tango.
 -- It requires LuaSocket and Copas.
--- Tango relies on a customizable table serialization. 
 module('tango.copas')
-
---- The maximum number of decimals the serialized table's size can grow to.
--- This value can be reduced to save very some bytes of traffic.
--- @usage tango.tabmaxdecimals=3 (allow 999 bytes maximum table length and safe some bytes traffic)
-tabmaxdecimals = 12
-
---- private helper
-local formatlen = 
-  function(len)
-    return sformat('%'..tabmaxdecimals..'d',len)
-  end
 
 local send = 
   function(socket,tab)
     -- send tabmaxdecimals ascii coded length
-    local sent,err = socket:send(formatlen(#tab))
+    local sent,err = socket:send(tostring(#tab)..'\n')
     if not sent then                                                      
       error(err)
     end
@@ -45,7 +33,7 @@ local send =
 
 local receive = 
   function(socket)
-    local responselen,err = socket:receive(tabmaxdecimals)                         
+    local responselen,err = socket:receive('*l')                         
     if not responselen then
       error(err)
     end                         

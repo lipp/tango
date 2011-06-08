@@ -75,7 +75,7 @@ proxy =
             local prox = rawget(self,sub_method_name)
             if not prox then 
               local new_method_name
-              if not method_base then
+              if not method_name then
                 new_method_name = sub_method_name
               else
                 new_method_name = method_name..'.'..sub_method_name

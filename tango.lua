@@ -12,13 +12,20 @@ local unserialize = serialization.unserialize
 local type_notification = 2
 local type_call = 1
 
-
+--- A small but customizable remote procedure framework.
+-- Following aspects are customizable: serialization and transport layer.
+-- Further the io / event model is not part of the tango core.
+-- Anyhow, tango comes with default copas backend, with a compatible server and client.
 module('tango')
 
 --- A generic (remote) method call.
 -- Wraps the method_name and the variable arguments into a table, 
 -- serializes and transmit it. Afterwards waits for reponse, unserializes
 -- and unwraps it.
+-- @param transport A table which holds the send and receive methods for data transmission.
+-- @param method_name A string which holds the method name to be called on the server side, 
+-- e.g. 'os.execute', 'print' or 'mymodule.like.this'
+-- @param ... The additional arguments to the call.
 -- @return The unwraped response.
 call = 
   function(transport,method_name,...)
@@ -34,16 +41,22 @@ call =
 --- A generic notification.
 -- Wraps the method_name and the variable arguments into a table, 
 -- serializes and transmit it.
+-- @param transport A table which holds the send methods for data transmission.
+-- @param method_name A string which holds the method name to be called on the server side, 
+-- e.g. 'os.execute', 'print' or 'mymodule.like.this'
+-- @param ... The additional arguments to the call.
+-- @return Nothing
 notify = 
   function(transport,method_name,...)
     transport.send(serialize{method_name,type_notification,...})
   end
 
---- A call proxy.
--- Call proxies send a request table object and receive a table object in reponse.
--- @param path The remote table address delimited by dots, e.g. os.exit string.format etc.
--- @param send The method to send the serialized request table
--- @param receive The method to receive the serialized resonse table
+--- A proxy for method calls of notifications.
+-- Call proxies send a request table object and receive a table object in reponse,
+-- whereas notification proxies just send requests but do expect any response.
+-- @param transport A table which holds the send methods for data transmission.
+-- @param call A function which performs the actual call. Can be either tango.call or tango.notify.
+-- @param method_name A string which holds the method name to be called on the server side, 
 proxy = 
   function(transport,call,method_name)
     return setmetatable(
@@ -84,6 +97,12 @@ proxy =
       })
   end
 
+--- Dispatches an incoming request, which can be either type_call or type_notification
+-- @param request_str A string containing the serialized request.
+-- @param method_tab A table, which holds all reachable server methods. Can be _G to access all.
+-- @param pcall A function, which behaves like standard pcall. Depending on backend, this may 
+-- be copcall or coco based pcall.
+-- @return A string, which holds the serialized response or nil if request was a notification.
 dispatch = 
   function(request_str,method_tab,pcall)
     local unserialize = unserialize

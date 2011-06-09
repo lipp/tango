@@ -2,9 +2,14 @@ About
 =======
 
 tango is small, rather simple and customizable rpc package for Lua.
-It does not imply any certain io / event model. Instead tango provides
+Calling remote functions is fully transparent and makes syntactically
+no difference to local calls. Remote errors are also forwarded.
+tango does not imply any certain io / event model. Instead tango provides
 different backends for common io / event modules. The table
 serialization can be customized as well.
+
+tango supports 1-1 remote calls (send request,receive response) as
+well as 1-N notifications (send request, NO reponse).
 
 Backends included
 ---------------------
@@ -30,6 +35,11 @@ The client code calling the remote server function 'greet'
       local proxy = tango.copas.client('localhost')
       proxy.greet('Hello','Horst')
 
+Since the server exposes the global table _G per default, the client may even
+directly call print and let the server sleep a bit remotely.
+
+      proxy.print('I','call','print','myself')         
+      proxy.os.execute('sleep 1')
 
 Serialization
 -------------
@@ -51,7 +61,7 @@ tango.unserialize appropriate. E.g. with lua-marshal methods table.marshal and t
 Requirements
 ------------
 
-* Either of the supported event/io backends. If your backend is
+Either of the supported event/io backends. If your backend is
 currently not supported, just write your own :)
 
 The most common socket/io combination might be luasocket+copas.

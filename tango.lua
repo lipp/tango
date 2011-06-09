@@ -6,9 +6,7 @@ local type = type
 local error = error
 local print = print
 local unpack = unpack
-local serialization = require'tango.serialization'
-local serialize = serialization.serialize
-local unserialize = serialization.unserialize
+local default_serialization = require'tango.serialization'
 local type_notification = 2
 local type_call = 1
 
@@ -17,6 +15,9 @@ local type_call = 1
 -- Further the io / event model is not part of the tango core.
 -- Anyhow, tango comes with default copas backend, with a compatible server and client.
 module('tango')
+
+serialize = default_serialization.serialize
+unserialize = default_serialization.unserialize
 
 --- A generic (remote) method call.
 -- Wraps the method_name and the variable arguments into a table, 

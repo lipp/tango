@@ -41,6 +41,8 @@ local receive =
   function(socket)
     local responselen,err = socket:receive('*l')                         
     if not responselen then
+      socket:shutdown()
+      socket:close()
       error(err)
     end                         
     -- convert ascii len to number of bytes

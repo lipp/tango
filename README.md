@@ -76,8 +76,8 @@ With LuaRocks > 2.0.4.1:
 Note: luarocks require lua-sec for doing https requests.
 Install with apt
 
-        $ sudo apt-get install liblua5.1-sec1
+     $ sudo apt-get install liblua5.1-sec1
 
 or LuaRocks
 
-      $ sudo luarocks install luasec
+     $ sudo luarocks install luasec

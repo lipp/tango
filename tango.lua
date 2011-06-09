@@ -20,9 +20,10 @@ module('tango')
 
 --- A generic (remote) method call.
 -- Wraps the method_name and the variable arguments into a table, 
--- serializes and transmit it. Afterwards waits for reponse, unserializes
--- and unwraps it.
--- @param transport A table which holds the send and receive methods for data transmission.
+-- serializes and transmits the serialized data. Afterwards 'call' waits for reponse, unserializes
+-- tha data received and unwraps its table contents.
+-- Forwards all errors which happen on the server side.
+-- @param transport A table which holds (at least) the send and receive methods for data transport.
 -- @param method_name A string which holds the method name to be called on the server side, 
 -- e.g. 'os.execute', 'print' or 'mymodule.like.this'
 -- @param ... The additional arguments to the call.
@@ -40,8 +41,8 @@ call =
 
 --- A generic notification.
 -- Wraps the method_name and the variable arguments into a table, 
--- serializes and transmit it.
--- @param transport A table which holds the send methods for data transmission.
+-- serializes and transmits the serialized data.
+-- @param transport A table which holds (at least) the send method for data transfer.
 -- @param method_name A string which holds the method name to be called on the server side, 
 -- e.g. 'os.execute', 'print' or 'mymodule.like.this'
 -- @param ... The additional arguments to the call.
@@ -54,9 +55,12 @@ notify =
 --- A proxy for method calls of notifications.
 -- Call proxies send a request table object and receive a table object in reponse,
 -- whereas notification proxies just send requests but do expect any response.
+-- Usually a transport backend implementation like @see tango.copas.client return a
+-- proxy instance. 
 -- @param transport A table which holds the send methods for data transmission.
 -- @param call A function which performs the actual call. Can be either tango.call or tango.notify.
 -- @param method_name A string which holds the method name to be called on the server side, 
+-- @usage local myproxy = tango.copas.client('localhost',12345); myproxy.print('bye!'); myproxy.os.exit(0)
 proxy = 
   function(transport,call,method_name)
     return setmetatable(
@@ -111,25 +115,21 @@ dispatch =
     local method = method_tab
     local method_name = request[1]
     local request_type = request[2]
+    if request_type == type_notification then
+      serialize = function()
+                    return nil
+                  end
+    end
+    local response = nil
     for method_part in method_name:gmatch('[%w_]+') do
       if type(method) == 'table' and method[method_part] then
         method = method[method_part]
       else
-        return serialize{
-          false,
-          'tango server path invalid:'..method_name
-        }
+        return serialize{false,'tango server path invalid:'..method_name}
       end  
     end        
     if type(method) ~= 'function' then
-      return serialize{
-        false,
-        'tango server path does not resolve to function:'..method_name
-      }
+      return serialize{false,'tango server path no function:'..method_name}
     end        
-    if request_type == type_call then
-      return serialize{pcall(method,unpack(request,3))}
-    elseif request_type == type_notification then
-      pcall(method,unpack(request,3))
-    end
+    return serialize{pcall(method,unpack(request,3))}
   end    

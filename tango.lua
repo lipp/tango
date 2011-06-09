@@ -24,15 +24,15 @@ unserialize = default_serialization.unserialize
 -- serializes and transmits the serialized data. Afterwards 'call' waits for reponse, unserializes
 -- tha data received and unwraps its table contents.
 -- Forwards all errors which happen on the server side.
--- @param transport A table which holds (at least) the send and receive methods for data transport.
+-- @param transport A table which holds (at least) the send_message and receive_message methods for data transport.
 -- @param method_name A string which holds the method name to be called on the server side, 
 -- e.g. 'os.execute', 'print' or 'mymodule.like.this'
 -- @param ... The additional arguments to the call.
 -- @return The unwraped response.
 call = 
   function(transport,method_name,...)
-    transport.send(serialize{method_name,type_call,...})
-    local response = unserialize(transport.receive())
+    transport.send_message(serialize{method_name,type_call,...})
+    local response = unserialize(transport.receive_message())
     if response[1] == true then
       return unpack(response,2)
     else
@@ -50,7 +50,7 @@ call =
 -- @return Nothing
 notify = 
   function(transport,method_name,...)
-    transport.send(serialize{method_name,type_notification,...})
+    transport.send_message(serialize{method_name,type_notification,...})
   end
 
 --- A proxy for method calls of notifications.
@@ -58,7 +58,7 @@ notify =
 -- whereas notification proxies just send requests but do expect any response.
 -- Usually a transport backend implementation like @see tango.copas.client return a
 -- proxy instance. 
--- @param transport A table which holds the send methods for data transmission.
+-- @param transport A table which holds the send_message methods for data transmission.
 -- @param call A function which performs the actual call. Can be either tango.call or tango.notify.
 -- @param method_name A string which holds the method name to be called on the server side, 
 -- @usage local myproxy = tango.copas.client('localhost',12345); myproxy.print('bye!'); myproxy.os.exit(0)

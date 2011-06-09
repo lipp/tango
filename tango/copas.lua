@@ -1,13 +1,13 @@
 local socket = require'socket'
+local send_message = require'tango.socket'.send_message
+local receive_message = require'tango.socket'.receive_message
+local default_client = require'tango.socket'.client
 local copas = require'copas'
 local coxpcall = require'coxpcall'
-local core = require'tango'
+local dispatch = require'tango'.dispatch
 
 -- private helpers
-local tonumber = tonumber
-local tostring = tostring
 local copcall = copcall
-local error = error
 local print = print
 
 -- to access outer function in the proxy remote call (__call)
@@ -17,82 +17,7 @@ local globals = _G
 -- It requires LuaSocket and Copas.
 module('tango.copas')
 
---- Sends a string with arbitrary (binary) content.
-local send = 
-  function(socket,str)
-    -- send length of the string as ascii line
-    local sent,err = socket:send(tostring(#str)..'\n')
-    if not sent then                                                      
-      socket:shutdown()
-      socket:close()
-      error(err)
-    end
-    -- send the actual string data
-    sent,err = socket:send(str)
-    if not sent then
-      socket:shutdown()
-      socket:close()
-      error(err)
-    end
-  end
-
---- Receives a string with arbitrary (binary) content.
-local receive = 
-  function(socket)
-    local responselen,err = socket:receive('*l')                         
-    if not responselen then
-      socket:shutdown()
-      socket:close()
-      error(err)
-    end                         
-    -- convert ascii len to number of bytes
-    responselen = tonumber(responselen)
-    if not responselen then
-      socket:shutdown()
-      socket:close()
-      error('length as ascii number string not ok')
-    end                       
-    -- receive the actual response table dataa
-    local response,err = socket:receive(responselen)
-    if not response then
-      socket:shutdown()
-      socket:close()
-      error(err)
-    end            
-    return response
-  end
-
---- Returns a call proxy to the specified client.
--- Invoke remote functions on the returned variable.
--- @usage c = tango.connect('localhost'); c.greet('horst')
--- it is also possible to functions inside tables, like
--- @usage c.utils.greetall()
--- @return a proxy to the server global table
--- @param adr A string, which represents the server address, may be server name e.g. www.horst.de
--- @param port A number, which specifies the port on which the server listens (default 12345)
--- @param timeout A number in milliseconds, which define timeouts for all socket operations (default 5000)
--- involved using the proxy (connect,send,receive)
--- @param call A function which performs the actual call. Can be either tango.call or tango.notify (default tango.call).
-client = 
-  function(adr,port,timeout,call)
-    local sock = socket.tcp()
-    sock:settimeout(timeout or 5000)
-    sock:setoption('tcp-nodelay',true)
-    local connected,err = sock:connect(adr,port or 12345)
-    if not connected then
-      return error(err)
-    end
-    local transport = {
-      socket = sock,
-      send = function(data)
-               send(sock,data)
-             end,
-      receive = function()
-                  return receive(sock)
-                end
-    }
-    return core.proxy(transport,call or core.call)
-  end
+client = default_client
 
 --- Returns a copas compatible server, which holds the connection and 
 -- dispatches all proxy / client requests. 
@@ -105,10 +30,10 @@ server =
     socket:setoption('tcp-nodelay',true)
     local wrapsocket = copas.wrap(socket)
     while true do
-      local request = receive(wrapsocket)
-      local response = core.dispatch(request,functab,copcall)
+      local request = receive_message(wrapsocket)
+      local response = dispatch(request,functab,copcall)
       if response then
-        send(wrapsocket,response)
+        send_message(wrapsocket,response)
         wrapsocket:flush()
       end
     end

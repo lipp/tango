@@ -81,7 +81,7 @@ Installation
 -------------
 With LuaRocks > 2.0.4.1:
 
-     $ sudo luarocks install 
+     $ sudo luarocks install https://raw.github.com/lipp/tango/multi-backend/tango-0.1-0.rockspec
 
 Note: luarocks require lua-sec for doing https requests.
 Install with apt

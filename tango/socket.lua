@@ -77,7 +77,7 @@ client =
     local sock = socket.tcp()
     sock:settimeout(timeout or 5000)
     sock:setoption('tcp-nodelay',true)
-    local connected,err = sock:connect(adr,port or 12345)
+    local connected,err = sock:connect(adr or 'localhost',port or 12345)
     if not connected then
       return error(err)
     end

@@ -1,7 +1,11 @@
 require'tango'
 
+local backend = arg[1] or 'copas'
+
+client = require('tango.'..backend).client
+
 local connect = function()
-                  return tango.client('localhost',12345,{calltimeout=0.01})
+                  return client()
                 end
 
 local test = function(txt,f)
@@ -37,41 +41,8 @@ test('string error test',
 test('multiple return values',
      function()
        local a,b,c = 1.234,true,{el=11}
-       local a2,b2,c2 = client.multi(a,b,c)
+       local a2,b2,c2 = client.echo(a,b,c)
        return a==a2 and b==b2 and c.el==c2.el
-     end)
-
-test('timeout test',
-     function()
-       local status,msg = pcall(function()client.msleep(100)end)
-       return status==false and msg:find('timeout')
-     end)
-
--- 'resync' with server (server maybe still sleeping!!!)
-io.popen('sleep 0.1'):read()
--- connection errors and timeouts require a 'reconnect'
-local client = connect()
-
-test('timeout with tango.pcall',
-     function()
-       local status,msg,tangoerr = tango.pcall(function()client.msleep(100) end)        
-       return status==false and tangoerr and tangoerr.code==tango.calltimeout_error and tangoerr.path=='msleep'
-     end)
-
--- 'resync' with server (server maybe still sleeping!!!)
-io.popen('sleep 0.1'):read()
--- connection errors and timeouts require a 'reconnect'
-local client = connect()
-
-test('pcall test',
-     function()
-       local status,msg,tangoerr = pcall(function()client.strerror('test')end)
-       return status==false and msg:find('test') and tangoerr==nil
-     end)
-
-test('add test',
-     function()
-       return client.add(1,2)==3
      end)
 
 test('custom error test',
@@ -92,8 +63,3 @@ test('not existing proxy paths',
        return status==false and msg:find('notexisting') and msg:find('path')
      end)
 
-test('not existing proxy path with tango.pcall',
-     function()
-       local status,msg,tangoerr = tango.pcall(function()client.notexisting() end) 
-       return status==false and tangoerr.code==tango.path_error and tangoerr.path=='notexisting'
-     end)

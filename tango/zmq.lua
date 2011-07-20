@@ -56,11 +56,11 @@ client =
     local transport = {
       context = context,
       socket = socket,
-      send = 
+      send_message = 
         function(tab)
           socket:send(tab)
         end,
-      receive = 
+      receive_message = 
         function(tab)
           return socket:recv()     
         end

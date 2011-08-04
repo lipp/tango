@@ -26,18 +26,21 @@ client = default_client
 -- @param functab A (deep/nested) table with the functions which are exposed by the server, if not
 -- specified or nil the global table _G is used, which means that ALL functions (e.g. os.exit) reachable via _G are exported.
 server = 
-  function(socket,functab)
-    socket:setoption('tcp-nodelay',true)
-    local wrapsocket = copas.wrap(socket)
-    while true do
-      local request = receive_message(wrapsocket)
-      local response = dispatch(request,functab,copcall)
-      if response then
-        send_message(wrapsocket,response)
-        wrapsocket:flush()
+   function(socket,functab)
+      socket:setoption('tcp-nodelay',true)
+      local wrapsocket = copas.wrap(socket)
+      copcall(
+         function()
+            while true do
+               local request = receive_message(wrapsocket)
+               local response = dispatch(request,functab,copcall)
+               if response then
+                  send_message(wrapsocket,response)
+                  wrapsocket:flush()
+               end
+            end
+         end)
       end
-    end
-  end
 
 --- Starts a tango stand-alone server.
 -- For standalone usage of tango server, never returns.

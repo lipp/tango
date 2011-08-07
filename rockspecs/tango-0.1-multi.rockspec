@@ -1,5 +1,5 @@
 package = 'tango'
-version = '0.1-0'
+version = '0.1-1'
 source = {
    url = 'git://github.com/lipp/tango.git',
    branch = 'multi-backend'
@@ -11,7 +11,10 @@ description = {
 }
 dependencies = {
    'lua >= 5.1',
-   'luasocket >= 2.0.2'
+   'luasocket >= 2.0.2',
+   'copas >= 1.1.6',
+   'lua-ev >= 1.2',
+   'lua-zmq >= 1.0
 }
 build = {
    type = 'builtin',

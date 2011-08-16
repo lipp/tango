@@ -1,12 +1,6 @@
-require'tango'
+local backend = arg[1]
 
-local backend = arg[1] or 'copas'
-
-client = require('tango.'..backend).client
-
-local connect = function()
-                  return client()
-                end
+client = require('tango.client.'..backend)
 
 local test = function(txt,f)
                io.write(txt..' ... ')
@@ -18,7 +12,7 @@ local test = function(txt,f)
                end
              end
 
-local client = connect()
+local client = client()
 
 test('echo test',
      function()

@@ -22,17 +22,17 @@ Example (with copas backend)
 --------------------------------
 The greet server code 
 
-      require'tango.copas'
+      require'tango.server.copas_socket'
       greet = function(...)
                 print(...)
               end         
-      tango.copas.serve()
+      tango.server.copas_socket.loop()
 
 
 The client code calling the remote server function 'greet'
 
-      require'tango.copas'
-      local proxy = tango.copas.client('localhost')
+      require'tango.client.socket'
+      local proxy = tango.client.socket('localhost')
       proxy.greet('Hello','Horst')
 
 Since the server exposes the global table _G per default, the client may even
@@ -43,20 +43,13 @@ directly call print and let the server sleep a bit remotely.
 
 Serialization
 -------------
-tango provides a default (lua-only) table serialization which ...well,
-just works.
+tango provides a default (lua-only) table serialization which works.
 
 Anyhow, the table serialization is neither exceedingly fast nor
 compact in output. If this is a problem for your application, you can
-customize the serialization by overwriting tango.serialize and
-tango.unserialize appropriate. E.g. with lua-marshal methods table.marshal and table.unmarshal respectively
-(from the [lua-marshal](https://github.com/richardhundt/lua-marshal))
+customize the serialization by overwriting ... TODO
 
-      require'tango'
-      require'marshal'
-
-      tango.serialize = table.marshal  
-      tango.unserialize = table.unmarshal  
+([lua-marshal](https://github.com/richardhundt/lua-marshal))
 
 Requirements
 ------------

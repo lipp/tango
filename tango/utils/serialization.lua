@@ -15,8 +15,9 @@ local print = print
 
 --- The default tango serialization module.
 -- Uses table serialization from http://lua/users.org/wiki/TableUtils and loadstring for unserialize.
--- Is neither fast nor compact, but Lua only.
 module('tango.serialization')
+
+local serialize
 
 local valtostr = 
   function(v)
@@ -56,8 +57,9 @@ serialize =
     return '{'..tconcat(result,',')..'}'
   end
 
-unserialize = 
+local unserialize = 
   function(strtab)
     return loadstring('return '..strtab)()
   end
 
+return {serialize=serialize,unserialize=unserialize}

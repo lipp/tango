@@ -1,15 +1,16 @@
 About
 =======
 
-tango is small, rather simple and customizable rpc package for Lua.
-Calling remote functions is fully transparent and makes syntactically
-no difference to local calls. Remote errors are also forwarded.
-tango does not imply any certain io / event model. Instead tango provides
-different backends for common io / event modules. The table
-serialization can be customized as well.
+tango is small, simple and customizable RPC (remote procedure call)
+module for Lua.
 
-tango supports 1-1 remote calls (send request,receive response) as
-well as 1-N notifications (send request, NO reponse).
+Its main features are:
+* a generic transparent [proxy](https://github.com/lipp/tango/blob/multi-backend/tango/proxy.lua) for call invocations
+* a generic [dispatch](https://github.com/lipp/tango/blob/multi-backend/tango/dispatch.lua) routine for servers
+* several server implementations for different protocols, message formats and event/io
+frameworks, further called backends
+* several client implementations for different protocols and message formats
+
 
 Backends included
 ---------------------

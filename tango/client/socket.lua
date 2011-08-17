@@ -1,4 +1,3 @@
--- private helpers
 local tonumber = tonumber
 local tostring = tostring
 local error = error
@@ -48,7 +47,7 @@ new =
                close_and_rethrow(result)
             end
          end  
-      return proxy.new(send_request,recv_response)
+      return proxy(send_request,recv_response)
    end
 
 return new

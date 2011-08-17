@@ -42,6 +42,14 @@ directly call print and let the server sleep a bit remotely.
       proxy.print('I','call','print','myself')         
       proxy.os.execute('sleep 1')
 
+Tests
+------
+
+You can run test by the following sh call in the project root directory
+
+      ./test.lua
+
+
 Serialization
 -------------
 tango provides a default (lua-only) table serialization which works.

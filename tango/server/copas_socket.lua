@@ -16,7 +16,6 @@ module('tango.server.copas_socket')
 
 new = 
    function(socket,functab)
-      print('aaaaa')
       socket:setoption('tcp-nodelay',true)
       local wrapsocket = copas.wrap(socket)
       local ok,err = copcall(

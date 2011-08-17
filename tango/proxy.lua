@@ -1,4 +1,3 @@
--- private helpers
 local rawget = rawget
 local rawset = rawset
 local type = type
@@ -47,5 +46,5 @@ new =
          })
    end
 
-return {new=new}
+return new
 

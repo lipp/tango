@@ -22,7 +22,7 @@ local dispatch =
          end  
       end        
       if type(method) ~= 'function' then
-         return {false,'tango server path no function:'..method_name}
+         return {false,'tango server path is not a function:'..method_name}
       end        
       return {pcall(method,unpack(request,2))}
    end    

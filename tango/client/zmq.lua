@@ -27,7 +27,7 @@ local new =
             return unserialize(response_str)    
          end
       
-      return proxy.new(send_request,recv_response)
+      return proxy(send_request,recv_response)
    end
 
 return new

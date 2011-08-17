@@ -1,11 +1,14 @@
--- private helpers
 local type = type
 local error = error
 local unpack = unpack
 
---- A generic remote procedure call dispatcher.
 module('tango.dispatch')
 
+--- Dispatches the specified request.
+-- @param request A table which holds as first element the method name with dots as table separators (e.g. os.getenv) and es second parameter the arguments wrapped in a table.
+-- @param root A (nested) table which holds all the methods, which can be called. To allow global access, pass _G.
+-- @param pcall The pcall to use. Some event environments require "special" pcalls, like copcall for the copas framework.
+-- @return A table which holds the wrapped pcall result.
 local dispatch = 
    function(request,root,pcall)
       local method = root

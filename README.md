@@ -96,13 +96,13 @@ Socket client with customized serialization:
 
 Copas socket server with customized serialization:
 
-       ```lua
-       local cjson = require'cjson'
-       local server = require'tango.server.copas_socket'
-       server.loop{
-              serialize=cjson.encode,
-              unserialize=cjson.decode}
-       ```
+```lua
+local cjson = require'cjson'
+local server = require'tango.server.copas_socket'
+server.loop{
+   serialize=cjson.encode,
+   unserialize=cjson.decode}
+```
 
 Some alternatives are:
 

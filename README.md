@@ -53,44 +53,50 @@ You can run test by the following sh call in the project root directory
 
 Serialization
 -------------
-tango provides a default (lua-only) table serialization which works.
+tango provides a default (lua-only) table serialization which should
+meet most common use cases.
 
 Anyhow, the table serialization is neither exceedingly fast nor
-compact in output. If this is a problem for your application, you can
-customize the serialization by overwriting ... TODO
+compact in output or memory consumption. If this is a problem for your application, you can
+customize the serialization by assigning your serialize/unserialize
+methods to the clients and servers respectively.
 
-([lua-marshal](https://github.com/richardhundt/lua-marshal))
+Socket client with customized serialization:
+
+        local cjson = require'cjson'
+        local connect = require'tango.client.socket'.connect
+        local client = connect{
+              serialize=cjson.encode,
+              unserialize=cjson.decode}
+
+Copas socket server with customized serialization:
+
+        local cjson = require'cjson'
+        local server = require'tango.server.copas_socket'
+        server.loop{
+              serialize=cjson.encode,
+              unserialize=cjson.decode}
+
+Some alternatives are:
+
+* [lua-marshal](https://github.com/richardhundt/lua-marshal)
+* [lua-cjson](http://www.kyne.com.au/~mark/software/lua-cjson.php)
 
 Requirements
 ------------
 
-Either of the supported event/io backends. If your backend is
-currently not supported, just write your own :)
+The requirements depend on the desired i/o backend, see the
+corresponding rockspecs for details
 
-The most common socket/io combination might be luasocket+copas.
+  * ...
 
-To install use apt
-
-      $ sudo apt-get install liblua5.1-socket2
-      $ sudo apt-get install liblua5.1-copas0
-
-
-or LuaRocks
-
-      $ sudo luarocks install luasocket
-      $ sudo luarocks install copas
 
 Installation
 -------------
 With LuaRocks > 2.0.4.1:
 
-     $ sudo luarocks install https://raw.github.com/lipp/tango/multi-backend/tango-0.1-0.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/multi-backend/rockspecs/tango-0.1-1.rockspec
 
-Note: luarocks require lua-sec for doing https requests.
-Install with apt
-
-     $ sudo apt-get install liblua5.1-sec1
-
-or LuaRocks
+Note: luarocks require luasec for doing https requests.
 
      $ sudo luarocks install luasec

@@ -8,8 +8,8 @@ echo = function(...)
           return ...
        end
 
-strerror = function(err)
-              error(err)
+strerror = function()
+              error('testmessage')
            end
 
 customerror = function(err)
@@ -22,5 +22,5 @@ nested = {
   }
 }
 
-local backend = require('tango.server.'..backend)
-backend.loop()
+local server = require('tango.server.'..backend)
+server.loop()

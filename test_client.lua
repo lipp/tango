@@ -1,6 +1,6 @@
 local backend = arg[1]
 
-client = require('tango.client.'..backend)
+local connect = require('tango.client.'..backend)
 
 local test = function(txt,f)
                io.write(txt..' ... ')
@@ -12,24 +12,18 @@ local test = function(txt,f)
                end
              end
 
-local client = client()
-
-test('echo test',
-     function()
-       local tab = {number=444,name='horst',bool=true}
-       local tab2 = client.echo(tab)
-       return tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool
-     end)
+local client = connect()
 
 test('add test',
      function()
        return client.add(1,2)==3
      end)
 
-test('string error test',
+test('echo test',
      function()
-       local status,msg = pcall(function()client.strerror('testmessage')end)
-       return status==false and msg:find('testmessage')
+       local tab = {number=444,name='horst',bool=true}
+       local tab2 = client.echo(tab)
+       return tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool
      end)
 
 test('multiple return values',
@@ -39,11 +33,17 @@ test('multiple return values',
        return a==a2 and b==b2 and c.el==c2.el
      end)
 
+test('string error test',
+     function()
+       local status,msg = pcall(function()client.strerror()end)
+       return status==false and type(msg) == 'string' and msg:find('testmessage') 
+     end)
+
 test('custom error test',
      function()
        local errtab = {code=117}
        local status,errtab2 = pcall(function()client.customerror(errtab)end)
-       return status==false and errtab2.code==errtab.code
+       return status==false and type(errtab2) == 'table' and errtab2.code==errtab.code
      end)
 
 test('nested method name test',

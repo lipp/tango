@@ -1,7 +1,8 @@
 package = 'tango'
 version = '0.1-1'
 source = {
-   url = 'git://github.com/lipp/tango.git'
+   url = 'git://github.com/lipp/tango.git',
+   branch = 'multi-backend'
 }
 description = {
    summary = 'Remote procedure calls (RPC) for Lua.',

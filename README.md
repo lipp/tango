@@ -24,29 +24,29 @@ Example (with copas backend)
 --------------------------------
 The greet server code 
 
-      ```lua
-      require'tango.server.copas_socket'
-      greet = function(...)
-                print(...)
-              end         
-      tango.server.copas_socket.loop()
-      ```
+```lua
+require'tango.server.copas_socket'
+greet = function(...)
+          print(...)
+        end         
+tango.server.copas_socket.loop{port=12345}
+```
 
 The client code calling the remote server function 'greet'
       
-      ```lua
-      require'tango.client.socket'
-      local proxy = tango.client.socket('localhost')
-      proxy.greet('Hello','Horst')
-      ```
+```lua
+require'tango.client.socket'
+local proxy = tango.client.socket.connect{address='localhost',port=12345}
+proxy.greet('Hello','Horst')
+```
 
 Since the server exposes the global table _G per default, the client may even
 directly call print and let the server sleep a bit remotely.
 
-      ```lua
-      proxy.print('I','call','print','myself')         
-      proxy.os.execute('sleep 1')
-      ```
+```lua
+proxy.print('I','call','print','myself')         
+proxy.os.execute('sleep 1')
+```
 
 Tests
 ------
@@ -86,22 +86,22 @@ methods to the clients and servers respectively.
 
 Socket client with customized serialization:
 
-       ```lua
-       local cjson = require'cjson'
-       local connect = require'tango.client.socket'.connect
-       local client = connect{
-              serialize=cjson.encode,
-              unserialize=cjson.decode}
-       ```
+```lua
+local cjson = require'cjson'
+local connect = require'tango.client.socket'.connect
+local client = connect{
+   serialize=cjson.encode,
+   unserialize=cjson.decode}
+```
 
 Copas socket server with customized serialization:
 
 ```lua
-        local cjson = require'cjson'
-        local server = require'tango.server.copas_socket'
-        server.loop{
-           serialize=cjson.encode,
-              unserialize=cjson.decode}
+local cjson = require'cjson'
+local server = require'tango.server.copas_socket'
+server.loop{
+   serialize=cjson.encode,
+   unserialize=cjson.decode}
 ```
 
 Some alternatives are:

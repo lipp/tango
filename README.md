@@ -1,7 +1,7 @@
 About
 =======
 
-tango is small, simple and customizable RPC (remote procedure call)
+tango is a small, simple and customizable RPC (remote procedure call)
 module for Lua.
 
 Its main features are:

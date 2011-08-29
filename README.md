@@ -24,6 +24,7 @@ Example (with copas backend)
 --------------------------------
 The greet server code 
 
+      ```lua
       require'tango.server.copas_socket'
       greet = function(...)
                 print(...)
@@ -32,7 +33,8 @@ The greet server code
 
 
 The client code calling the remote server function 'greet'
-
+      
+      ```lua
       require'tango.client.socket'
       local proxy = tango.client.socket('localhost')
       proxy.greet('Hello','Horst')
@@ -50,7 +52,8 @@ You can run test by the following sh call in the project root directory
 
       ./test.lua
 
-Client/Server compatibilities:
+Client/Server compatibilities
+-----------------------------
 
 <table border="1">               
         <tr>
@@ -80,17 +83,19 @@ methods to the clients and servers respectively.
 
 Socket client with customized serialization:
 
-        local cjson = require'cjson'
-        local connect = require'tango.client.socket'.connect
-        local client = connect{
+       ```lua
+       local cjson = require'cjson'
+       local connect = require'tango.client.socket'.connect
+       local client = connect{
               serialize=cjson.encode,
               unserialize=cjson.decode}
 
 Copas socket server with customized serialization:
 
-        local cjson = require'cjson'
-        local server = require'tango.server.copas_socket'
-        server.loop{
+       ```lua
+       local cjson = require'cjson'
+       local server = require'tango.server.copas_socket'
+       server.loop{
               serialize=cjson.encode,
               unserialize=cjson.decode}
 

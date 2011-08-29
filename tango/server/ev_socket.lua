@@ -7,12 +7,8 @@ local dispatch = require'tango.dispatch'
 local require = require
 local pcall = pcall
 local print = print
-
--- to access outer function in the proxy remote call (__call)
 local globals = _G
 
---- A copas compatible transport backend for tango.
--- It requires LuaSocket and Copas.
 module('tango.server.ev_socket')
 
 new = 

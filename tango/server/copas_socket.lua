@@ -7,8 +7,6 @@ local send_message = require'tango.utils.socket_message'.send
 local receive_message = require'tango.utils.socket_message'.receive
 local dispatch = require'tango.dispatch'
 local require = require
-
--- to access outer function in the proxy remote call (__call)
 local globals = _G
 
 module('tango.server.copas_socket')

@@ -30,7 +30,7 @@ The greet server code
                 print(...)
               end         
       tango.server.copas_socket.loop()
-
+      ```
 
 The client code calling the remote server function 'greet'
       
@@ -38,12 +38,15 @@ The client code calling the remote server function 'greet'
       require'tango.client.socket'
       local proxy = tango.client.socket('localhost')
       proxy.greet('Hello','Horst')
+      ```
 
 Since the server exposes the global table _G per default, the client may even
 directly call print and let the server sleep a bit remotely.
 
+      ```lua
       proxy.print('I','call','print','myself')         
       proxy.os.execute('sleep 1')
+      ```
 
 Tests
 ------
@@ -89,6 +92,7 @@ Socket client with customized serialization:
        local client = connect{
               serialize=cjson.encode,
               unserialize=cjson.decode}
+       ```
 
 Copas socket server with customized serialization:
 
@@ -98,6 +102,7 @@ Copas socket server with customized serialization:
        server.loop{
               serialize=cjson.encode,
               unserialize=cjson.decode}
+       ```
 
 Some alternatives are:
 

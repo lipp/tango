@@ -19,11 +19,14 @@ dependencies = {
 build = {
    type = 'builtin',
    modules = {
-      ['tango'] = 'tango.lua',
-      ['tango.serialization'] = 'tango/serialization.lua',
-      ['tango.copas'] = 'tango/copas.lua',
-      ['tango.zmq'] = 'tango/zmq.lua',
-      ['tango.ev'] = 'tango/ev.lua',
-      ['tango.socket'] = 'tango/socket.lua'      
+      ['tango.proxy'] = 'tango/proxy.lua',
+      ['tango.dispatch'] = 'tango/dispatch.lua',
+      ['tango.utils.serialization'] = 'tango/utils/serialization.lua',
+      ['tango.utils.socket_message'] = 'tango/utils/socket_message.lua',
+      ['tango.client.socket'] = 'tango/client/socket.lua',
+      ['tango.client.zmq'] = 'tango/client/zmq.lua',
+      ['tango.server.copas_socket'] = 'tango/server/copas_socket.lua',
+      ['tango.server.ev_socket'] = 'tango/server/ev_socket.lua',
+      ['tango.server.zmq'] = 'tango/server/zmq.lua'
    }
 }

@@ -113,7 +113,7 @@ Requirements
 ------------
 
 The requirements depend on the desired i/o backend, see the
-corresponding [rockspecs](https://github.com/lipp/tango/blob/multi-backend/tango/rockspecs/) for details.
+corresponding [rockspecs](https://github.com/lipp/tango/tree/multi-backend/tango/rockspecs) for details.
 
 
 Installation

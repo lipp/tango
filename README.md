@@ -50,6 +50,23 @@ You can run test by the following sh call in the project root directory
 
       ./test.lua
 
+Client/Server compatibilities:
+
+<table border="1">               
+        <tr>
+                <th></th><th>tango.client.socket</th><th>tango.client.zmq</th>
+        </tr>
+        <tr>
+                <th>tango.server.copas_socket</th><th>X</th><th></th>
+        </tr>
+        <tr>
+                <th>tango.server.ev_socket</th><th>X</th><th></th>
+        </tr>
+        <tr>
+                <th>tango.server.zmq</th><th></th><th>X</th>
+        </tr>
+</table>
+
 
 Serialization
 -------------

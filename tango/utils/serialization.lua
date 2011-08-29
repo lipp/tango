@@ -15,21 +15,36 @@ local print = print
 
 --- The default tango serialization module.
 -- Uses table serialization from http://lua/users.org/wiki/TableUtils and loadstring for unserialize.
-module('tango.serialization')
+module('tango.utils.serialization')
 
 local serialize
 
+local converters = {
+  string = function(v)
+             v = sgsub(v,"\n","\\n")
+             if smatch(sgsub(v,"[^'\"]",""),'^"+$') then
+               return "'"..v.."'"
+             end
+             return '"'..sgsub(v,'"','\\"')..'"'             
+           end,
+  table = function(v)
+            return serialize(v)
+          end,
+  number = function(v)
+             return tostring(v)
+           end,
+  boolean = function(v)
+           return tostring(v)
+         end  
+}
+
 local valtostr = 
   function(v)
-    local vtype = type(v)
-    if 'string' == vtype then
-      v = sgsub(v,"\n","\\n")
-      if smatch(sgsub(v,"[^'\"]",""),'^"+$') then
-        return "'"..v.."'"
-      end
-      return '"'..sgsub(v,'"','\\"')..'"'
+    local conv = converters[type(v)]
+    if conv then
+      return conv(v)
     else
-      return 'table' == vtype and serialize(v) or tostring(v)
+      return 'nil'
     end
   end
 

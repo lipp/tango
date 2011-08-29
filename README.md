@@ -113,16 +113,19 @@ Requirements
 ------------
 
 The requirements depend on the desired i/o backend, see the
-corresponding rockspecs for details
-
-  * ...
+corresponding [rockspecs](https://github.com/lipp/tango/blob/multi-backend/tango/rockspecs/) for details.
 
 
 Installation
 -------------
 With LuaRocks > 2.0.4.1:
 
-     $ sudo luarocks install https://raw.github.com/lipp/tango/multi-backend/rockspecs/tango-0.1-1.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/multi-backend/rockspecs/tango-complete-0.1-1.rockspec
+
+The complete package require lua-zmq and lua-ev. If you don't plan to
+use them and stick to copas, use this:
+  
+     $ sudo luarocks install https://raw.github.com/lipp/tango/multi-backend/rockspecs/tango-copas-0.1-1.rockspec
 
 Note: luarocks require luasec for doing https requests.
 

@@ -10,8 +10,7 @@ local require = require
 
 module('tango.client.socket')
 
-local new
-new = 
+connect = 
   function(config)     
     local sock = socket.tcp()
     config = config or {}
@@ -53,4 +52,4 @@ new =
     return proxy(send_request,recv_response)
   end
 
-return new
+return {connect=connect}

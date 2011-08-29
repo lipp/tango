@@ -1,6 +1,6 @@
 local backend = arg[1]
 
-local connect = require('tango.client.'..backend)
+local connect = require('tango.client.'..backend).connect
 
 local test = function(txt,f)
                io.write(txt..' ... ')

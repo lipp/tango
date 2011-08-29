@@ -8,7 +8,7 @@ local require = require
 --- A zmq (zeromq) compatible transport backend for tango.
 module('tango.client.zmq')
 
-local new = 
+connect = 
   function(config)
     config = config or {}
     local context = config.context or zmq.init(1)
@@ -33,4 +33,4 @@ local new =
     return proxy(send_request,recv_response)
   end
 
-return new
+return {connect=connect}

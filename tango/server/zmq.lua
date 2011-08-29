@@ -10,9 +10,6 @@ local globals = _G
 
 module('tango.server.zmq')
 
---- Creates a zmq poller compatible tango rpc server.
--- @return All the stuff nedded by poller:add
--- @usage poller = zmq.poller(123); poller:add(tango.zmq.server(context,'tcp://*:12345')
 local new = 
   function(config)
     config = config or {}
@@ -46,7 +43,6 @@ local new =
 
 --- Creates and starts a zmq based tango rpc server.
 -- Never returns.
--- If you need to handle multiple sockets use @see tango.zmq.server.
 local loop = 
   function(config)     
     config = config or {}

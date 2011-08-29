@@ -34,7 +34,7 @@ tango.server.copas_socket.loop{
 }
 ```
 
-The client code calling the remote server function 'greet'
+The client code calling the remote server function `greet`
       
 ```lua
 require'tango.client.socket'
@@ -45,13 +45,14 @@ local proxy = tango.client.socket.connect{
 proxy.greet('Hello','Horst')
 ```
 
-Since the server exposes the global table _G per default, the client may even
-directly call print and let the server sleep a bit remotely.
+Since the server exposes the global table `_G` per default, the client may even
+directly call `print`,let the server sleep a bit remotely
+(`os.execute`) or calc some stuff (`math.sqrt`).
 
 ```lua
 proxy.print('I','call','print','myself')         
 proxy.os.execute('sleep 1')
-proxy.math.sqrt('sleep 1')
+proxy.math.sqrt(4)
 ```
 
 One can limit the server exposed functions by specifying a `functab`

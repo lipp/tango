@@ -2,7 +2,7 @@ package = 'tango-zmq'
 version = '0.1-1'
 source = {
    url = 'git://github.com/lipp/tango.git',
-   branch = 'multi-backend'
+   branch = 'master'
 }
 description = {
    summary = 'Remote procedure calls (RPC) for Lua.',

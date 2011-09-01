@@ -91,7 +91,7 @@ To allow such construct remotely via tango, one has to use the
 
 ```lua
 local client = require'tango.client.socket'.connect()
-local p = tango.proxy.ref(client.popen,'ls')
+local p = tango.proxy.ref(client.io.popen,'ls')
 local line = p:read('*l')
 ...
 p:close()

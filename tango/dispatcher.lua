@@ -48,6 +48,11 @@ local new =
           error(result[2])
         end
       end
+
+    d.functab.tango.ref_release = 
+      function(refid)
+        d.refs[refid] = nil
+      end
     
     d.functab.tango.ref_call = 
       function(refid,method_name,...)

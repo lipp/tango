@@ -5,13 +5,7 @@ local error = error
 local unpack = unpack
 local setmetatable = setmetatable
 
---- A generic remote procedure call proxy.
 module('tango.proxy')
-
--- define outside function definition to allow use as upvalue
-
---local remote_call = 
---  function(
 
 new = 
   function(send_request,recv_response,method_name)
@@ -62,6 +56,7 @@ ref =
     return setmetatable(
       {
         id = proxy.tango.ref_create(create_method,...),
+        proxy = proxy
       },
       {
         __index = 
@@ -71,7 +66,8 @@ ref =
               },
               {
                 __call =
-                  function(_,_,...)
+                  function(_,ref,...)
+                    local proxy = rawget(ref,'proxy')
                     return proxy.tango.ref_call(rawget(self,'id'),method_name,...)
                   end
               })
@@ -79,5 +75,16 @@ ref =
       })                      
   end
 
-return {new=new,ref=ref}
+unref = 
+  function(ref)
+    local proxy = rawget(ref,'proxy')
+    local id = rawget(ref,'id')
+    proxy.tango.ref_release(id)
+  end
+
+return {
+  new = new,
+  ref = ref,
+  unref = unref
+}
 

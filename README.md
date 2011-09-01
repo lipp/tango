@@ -134,6 +134,8 @@ Some alternatives are:
 
 * [lua-marshal](https://github.com/richardhundt/lua-marshal)
 * [lua-cjson](http://www.kyne.com.au/~mark/software/lua-cjson.php)
+* [luabins](https://github.com/agladysh/luabins)
+* [luatexts](https://github.com/agladysh/luatexts)
 
 Requirements
 ------------

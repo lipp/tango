@@ -6,7 +6,10 @@ module for Lua.
 
 Its main features are:
 
-* a generic transparent [proxy](https://github.com/lipp/tango/blob/develop/tango/proxy.lua) for call invocations
+* a generic transparent
+  [proxy](https://github.com/lipp/tango/blob/develop/tango/proxy.lua)
+  for call invocations
+* support of remote objects (tables with functions, userdata etc, see tango.proxy.ref)
 * a generic [dispatch](https://github.com/lipp/tango/blob/develop/tango/dispatch.lua) routine for servers
 * several server implementations for different protocols, message formats and event/io
 frameworks, further called backends

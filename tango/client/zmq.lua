@@ -30,7 +30,7 @@ connect =
         return unserialize(response_str)    
       end
     
-    return proxy(send_request,recv_response)
+    return proxy.new(send_request,recv_response)
   end
 
 return {connect=connect}

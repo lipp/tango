@@ -49,7 +49,7 @@ connect =
           close_and_rethrow(result)
         end
       end  
-    return proxy(send_request,recv_response)
+    return proxy.new(send_request,recv_response)
   end
 
 return {connect=connect}

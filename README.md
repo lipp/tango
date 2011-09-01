@@ -73,6 +73,33 @@ only call methods from the math module:
 proxy.sqrt(4)
 ```
 
+Using classes/tables/objects remotely (tango.proxy.ref)
+-----------------------------------------
+
+Even if Lua does not come with a class model, semi-object-oriented
+programming is broadly used via the semicolon operator, e.g.:
+
+```lua
+local p = io.popen('ls')
+local line = p:read('*l')
+...
+p:close()
+```
+
+To allow such construct remotely via tango, one has to use the
+`tango.proxy.ref`:
+
+```lua
+local client = require'tango.client.socket'.connect()
+local p = tango.proxy.ref(client.popen,'ls')
+local line = p:read('*l')
+...
+p:close()
+tango.proxy.unref(p)
+```
+
+This may seem a bit awkward, but it is certainly less hassle, then
+writing non-object-oriented counterparts on the server side.
 
 Tests
 ------

@@ -13,7 +13,6 @@ module('tango.proxy')
 --local remote_call = 
 --  function(
 
-local new 
 new = 
   function(send_request,recv_response,method_name)
     return setmetatable(
@@ -54,7 +53,7 @@ new =
       })
   end
 
-local ref = 
+ref = 
   function(proxy,...)
     local create_method = rawget(proxy,'method_name')
     local send_request = rawget(proxy,'send_request')
@@ -62,7 +61,7 @@ local ref =
     local proxy = new(send_request,recv_response)
     return setmetatable(
       {
-        id = proxy.tango.create_ref(create_method,...),
+        id = proxy.tango.ref_create(create_method,...),
       },
       {
         __index = 
@@ -72,7 +71,7 @@ local ref =
               },
               {
                 __call =
-                  function(_,...)
+                  function(_,_,...)
                     return proxy.tango.ref_call(rawget(self,'id'),method_name,...)
                   end
               })

@@ -2,7 +2,7 @@ local zmq = require"zmq"
 zmq.poller = require'zmq.poller'
 local serialize = require'tango.utils.serialization'.serialize
 local unserialize = require'tango.utils.serialization'.unserialize
-local dispatch = require'tango.dispatch'
+local dispatcher = require'tango.dispatcher'
 local require = require
 local print = print
 local pcall = pcall
@@ -16,6 +16,7 @@ local new =
     local serialize = config.serialize or require'tango.utils.serialization'.serialize
     local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
     local functab = config.functab or globals
+    local dispatcher = dispatcher.new(functab,pcall)
     local socket = config.context:socket(zmq.REP)
     socket:bind(config.url or 'tcp://*:12345')
     local poller = config.poller
@@ -33,7 +34,7 @@ local new =
                          return 
                        end
                        local request = unserialize(request_str)
-                       local response = dispatch(request,functab,pcall)
+                       local response = dispatcher:dispatch(request)
                        response_str = serialize(response) 
                        poller:modify(socket,zmq.POLLOUT,send_response)
                      end

@@ -3,7 +3,7 @@ local ev = require'ev'
 local default_loop = ev.Loop.default
 local send_message = require'tango.utils.socket_message'.send
 local receive_message = require'tango.utils.socket_message'.receive
-local dispatch = require'tango.dispatch'
+local dispatcher = require'tango.dispatcher'
 local require = require
 local pcall = pcall
 local print = print
@@ -17,6 +17,7 @@ new =
     local serialize = config.serialize or require'tango.utils.serialization'.serialize
     local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
     local functab = config.functab or globals
+    local dispatcher = dispatcher.new(functab,pcall)
     local server = socket.bind(config.interfaces or "*", config.port or 12345)
     return ev.IO.new(
       function(loop)        
@@ -43,7 +44,7 @@ new =
               function()
                 local request_str = receive_message(client)
                 local request = unserialize(request_str)
-                local response = dispatch(request,functab,pcall)
+                local response = dispatcher:dispatch(request)
                 response_str = serialize(response)
                 send_response:start(loop)              
                 receive_request:start(loop)   

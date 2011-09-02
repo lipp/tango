@@ -95,16 +95,10 @@ unref =
     proxy.tango.ref_release(id)
   end
 
-get = 
-  function(proxy)
-    local rproxy,variable_name = root(proxy)
-    return rproxy.tango.get(variable_name)
-  end
-
-set = 
+var = 
   function(proxy,value)
     local rproxy,variable_name = root(proxy)
-    rproxy.tango.set(variable_name,value)
+    return rproxy.tango.var(variable_name,value)
   end
 
 return {

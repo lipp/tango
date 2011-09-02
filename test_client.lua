@@ -75,10 +75,16 @@ test('tango.proxy.ref with person',
        return match
      end)
 
-test('tango.proxy.get and tango.proxy.set',
+test('tango.proxy.var',
      function()
-       tango.proxy.set(client.abc,4)
-       local abc = tango.proxy.get(client.abc)
-       return abc == 4
+       tango.proxy.var(client.abc,4)
+       return tango.proxy.var(client.abc) == 4
+     end)
+
+test('tango.proxy.var with tables',
+     function()
+       tango.proxy.var(client.abc,{sub='horst'})
+       local abc = tango.proxy.var(client.abc)
+       return type(abc) == 'table' and abc.sub == 'horst'
      end)
 

@@ -65,30 +65,29 @@ local new =
         end          
       end    
 
-    d.functab.tango.get = 
-      function(variable_name)
-        local variable = d.functab
-        for variable_part in variable_name:gmatch('[%w_]+') do
-          variable = variable[variable_part]
-        end        
-        return variable
-      end    
-
-    d.functab.tango.set = 
+    d.functab.tango.var = 
       function(variable_name,value)
-        local tab = d.functab
-        local iterator = variable_name:gmatch('[%w_]+')
-        local name_part
-        local next_name_part = iterator()
-        local last_tab
-        repeat
-          name_part = next_name_part
-          last_tab = tab
-          tab = tab[name_part]
-          next_name_part = iterator()          
-        until not next_name_part
-        last_tab[name_part] = value
-      end    
+         if not value then
+            local variable = d.functab
+            for variable_part in variable_name:gmatch('[%w_]+') do
+               variable = variable[variable_part]
+            end        
+            return variable
+         else
+            local tab = d.functab
+            local iterator = variable_name:gmatch('[%w_]+')
+            local name_part
+            local next_name_part = iterator()
+            local last_tab
+            repeat
+               name_part = next_name_part
+               last_tab = tab
+               tab = tab[name_part]
+               next_name_part = iterator()          
+            until not next_name_part
+            last_tab[name_part] = value
+         end    
+      end
     
     return d
   end

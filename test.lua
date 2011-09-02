@@ -2,7 +2,7 @@
 local spawn_server = 
    function(backend)
       local cmd = [[
-            lua test_server.lua %s &
+            lua test_server.lua >test_server.log %s &
             echo $!            
       ]]
       cmd = cmd:format(backend)

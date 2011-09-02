@@ -48,13 +48,19 @@ new =
       })
   end
 
+local rproxies = {}
+
 local root = 
   function(proxy)
     local method_name = rawget(proxy,'method_name')
     local send_request = rawget(proxy,'send_request')
-    local recv_response = rawget(proxy,'recv_response')
-    local root_proxy = new(send_request,recv_response)
-    return root_proxy,method_name
+    local rproxy
+    if not rproxies[send_request] then
+      local recv_response = rawget(proxy,'recv_response')
+      rproxy = new(send_request,recv_response)
+      rproxies[send_request] = rproxy
+    end
+    return rproxies[send_request],method_name
   end
 
 ref = 

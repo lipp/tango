@@ -66,6 +66,15 @@ test('tango.proxy.ref with io.popen',
        return match
      end)
 
+test('tango.proxy.ref with person',
+     function()
+       local pref = tango.proxy.ref(client.person,'horst')
+       pref:name('peter')
+       local match = pref:name() == 'peter'
+       tango.proxy.unref(pref)
+       return match
+     end)
+
 test('tango.proxy.get and tango.proxy.set',
      function()
        tango.proxy.set(client.abc,4)

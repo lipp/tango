@@ -53,8 +53,8 @@ test('nested method name test',
 
 test('not existing proxy paths',
      function()
-       local status,msg = pcall(function()client.notexisting()end) 
-       return status==false and msg:find('notexisting') and msg:find('path')
+       local status = pcall(function()client.notexisting()end) 
+       return status==false
      end)
 
 test('tango.proxy.ref with io.popen',
@@ -65,3 +65,11 @@ test('tango.proxy.ref with io.popen',
        tango.proxy.unref(pref)
        return match
      end)
+
+test('tango.proxy.get and tango.proxy.set',
+     function()
+       tango.proxy.set(client.abc,4)
+       local abc = tango.proxy.get(client.abc)
+       return abc == 4
+     end)
+

@@ -4,6 +4,7 @@ local type = type
 local error = error
 local unpack = unpack
 local setmetatable = setmetatable
+local print = print
 
 module('tango.proxy')
 
@@ -47,16 +48,22 @@ new =
       })
   end
 
-ref = 
-  function(proxy,...)
-    local create_method = rawget(proxy,'method_name')
+local root = 
+  function(proxy)
+    local method_name = rawget(proxy,'method_name')
     local send_request = rawget(proxy,'send_request')
     local recv_response = rawget(proxy,'recv_response')
-    local proxy = new(send_request,recv_response)
+    local root_proxy = new(send_request,recv_response)
+    return root_proxy,method_name
+  end
+
+ref = 
+  function(proxy,...)
+    local rproxy,create_method = root(proxy)
     return setmetatable(
       {
-        id = proxy.tango.ref_create(create_method,...),
-        proxy = proxy
+        id = rproxy.tango.ref_create(create_method,...),
+        proxy = rproxy
       },
       {
         __index = 
@@ -82,9 +89,23 @@ unref =
     proxy.tango.ref_release(id)
   end
 
+get = 
+  function(proxy)
+    local rproxy,variable_name = root(proxy)
+    return rproxy.tango.get(variable_name)
+  end
+
+set = 
+  function(proxy,value)
+    local rproxy,variable_name = root(proxy)
+    rproxy.tango.set(variable_name,value)
+  end
+
 return {
   new = new,
   ref = ref,
-  unref = unref
+  unref = unref,
+  get = get,
+  set = set  
 }
 

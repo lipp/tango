@@ -2,6 +2,7 @@ local type = type
 local error = error
 local unpack = unpack
 local tostring = tostring
+local print = print
 
 module('tango.dispatcher')
 
@@ -16,22 +17,22 @@ local new =
           local method_name = request[1]
           local response = nil
           for method_part in method_name:gmatch('[%w_]+') do
-            if type(method) == 'table' and method[method_part] then
+            if type(method) == 'table' then
               method = method[method_part]
             else
-              return {false,'tango server path invalid:'..method_name}
+              return {false,'tango server error ' .. '"' .. method_name .. '": no such method'}
             end  
           end        
           if type(method) ~= 'function' then
-            return {false,'tango server path is not a function:'..method_name}
+            return {false,'tango server error ' .. '"' .. method_name .. '": no such method'}
           end        
           return {self.pcall(method,unpack(request,2))}
         end    
-      }
+    }
 
     d.refs = {}
     d.functab.tango = functab.tango or {}
-   
+    
     d.functab.tango.ref_create = 
       function(create_method,...)
         local result = d:dispatch({create_method,...})
@@ -62,7 +63,32 @@ local new =
         else
           error('tango.ref invalid id' .. refid)
         end          
-      end
+      end    
+
+    d.functab.tango.get = 
+      function(variable_name)
+        local variable = d.functab
+        for variable_part in variable_name:gmatch('[%w_]+') do
+          variable = variable[variable_part]
+        end        
+        return variable
+      end    
+
+    d.functab.tango.set = 
+      function(variable_name,value)
+        local tab = d.functab
+        local iterator = variable_name:gmatch('[%w_]+')
+        local name_part
+        local next_name_part = iterator()
+        local last_tab
+        repeat
+          name_part = next_name_part
+          last_tab = tab
+          tab = tab[name_part]
+          next_name_part = iterator()          
+        until not next_name_part
+        last_tab[name_part] = value
+      end    
     
     return d
   end

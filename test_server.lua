@@ -1,24 +1,24 @@
 local backend = arg[1]
 
 add = 
-function(a,b)
-         return a+b
-      end
+  function(a,b)
+    return a+b
+  end
 
 echo = 
-function(...)
-          return ...
-       end
+  function(...)
+    return ...
+  end
 
 strerror = 
-function()
-              error('testmessage')
-           end
+  function()
+    error('testmessage')
+  end
 
 customerror = 
-function(err)
-               error(err)
-            end
+  function(err)
+    error(err)
+  end
 
 nested = {
   method = {

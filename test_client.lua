@@ -59,8 +59,8 @@ test('not existing proxy paths',
 
 test('tango.proxy.ref with io.popen',
      function()
-       local pref = tango.proxy.ref(client.io.popen,'ls')
-       local match = pref:read('*a'):find('test_client.lua')
+       local pref = tango.proxy.ref(client.io.popen,'echo hello')
+       local match = pref:read('*a'):find('hello')
        pref:close()
        tango.proxy.unref(pref)
        return match

@@ -13,20 +13,33 @@ local new =
       pcall = pcall,
       dispatch = 
         function(self,request)    
-          local method = self.functab
-          local method_name = request[1]
-          local response = nil
-          for method_part in method_name:gmatch('[%w_]+') do
-            if type(method) == 'table' then
-              method = method[method_part]
+          local var = self.functab
+          local var_name = request[1]
+          local last_part
+          local last_var
+          for part in var_name:gmatch('[%w_]+') do
+             last_part = part
+             last_var = var
+             if type(var) == 'table' then
+                var = var[part]
             else
-              return {false,'tango server error ' .. '"' .. method_name .. '": no such method'}
+              return {false,'tango server error ' .. '"' .. var_name .. '": no such variable'}
             end  
           end        
-          if type(method) ~= 'function' then
-            return {false,'tango server error ' .. '"' .. method_name .. '": no such method'}
+          if type(var) == 'function' then
+             return {self.pcall(var,unpack(request,2))}
+          else
+             local val = request[2]
+             if val then
+                return {self.pcall(
+                           function()
+                              last_var[last_part] = val
+                           end)}
+             else
+                return {true,var}
+             end
           end        
-          return {self.pcall(method,unpack(request,2))}
+          
         end    
     }
 
@@ -65,30 +78,6 @@ local new =
         end          
       end    
 
-    d.functab.tango.var = 
-      function(variable_name,value)
-         if not value then
-            local variable = d.functab
-            for variable_part in variable_name:gmatch('[%w_]+') do
-               variable = variable[variable_part]
-            end        
-            return variable
-         else
-            local tab = d.functab
-            local iterator = variable_name:gmatch('[%w_]+')
-            local name_part
-            local next_name_part = iterator()
-            local last_tab
-            repeat
-               name_part = next_name_part
-               last_tab = tab
-               tab = tab[name_part]
-               next_name_part = iterator()          
-            until not next_name_part
-            last_tab[name_part] = value
-         end    
-      end
-    
     return d
   end
 

@@ -23,8 +23,12 @@ Backends included
 * [lua-zmq](https://github.com/Neopallium/lua-zmq)
 * [lua-ev](https://github.com/brimworks/lua-ev)
 
-Example (with copas backend)
---------------------------------
+Tutorial (with copas backend)
+============================
+
+Greetings!
+----------
+
 The greet server code 
 
 ```lua
@@ -47,6 +51,9 @@ local proxy = tango.client.socket.connect{
 }
 proxy.greet('Hello','Horst')
 ```
+
+Access anything?
+----------------
 
 Since the server exposes the global table `_G` per default, the client may even
 directly call `print`,let the server sleep a bit remotely
@@ -76,7 +83,29 @@ only call methods from the math module:
 proxy.sqrt(4)
 ```
 
-Using classes/tables/objects remotely (tango.proxy.ref)
+Remote Variables
+-----------------
+
+Sometimes you need to get some data from the server, as
+enumaration-like-constants for instance. Instead of creating a mess of
+remote getters and setters, just treat the value of interest as a
+function...
+
+Let's read the remote table friends from the server
+```lua
+local client = require'tango.client.socket'.connect()
+local friends = client.friends()
+```
+
+If you want to change the servers state, just pass the new value as argument:
+```lua
+local client = require'tango.client.socket'.connect()
+local friends = client.friends()
+table.insert(friends,'Horst')
+client.friends(friends)
+```
+
+Using classes/tables/objects remotely (tango.ref)
 -----------------------------------------
 
 Even if Lua does not come with a class model, semi-object-oriented
@@ -94,18 +123,19 @@ To allow such construct remotely via tango, one has to use the
 
 ```lua
 local client = require'tango.client.socket'.connect()
-local p = tango.proxy.ref(client.io.popen,'ls')
+local p = tango.ref(client.io.popen,'ls')
 local line = p:read('*l')
 ...
 p:close()
-tango.proxy.unref(p)
+tango.unref(p)
 ```
 
 This may seem a bit awkward, but it is certainly less hassle, then
 writing non-object-oriented counterparts on the server side.
 
+
 Tests
-------
+=====
 
 You can run test by the following sh call in the project root directory
 

@@ -92,12 +92,15 @@ remote getters and setters, just treat the value of interest as a
 function...
 
 Let's read the remote table friends from the server
+
 ```lua
 local client = require'tango.client.socket'.connect()
 local friends = client.friends()
 ```
 
-If you want to change the servers state, just pass the new value as argument:
+If you want to change the servers state, just pass the new value as
+argument:
+
 ```lua
 local client = require'tango.client.socket'.connect()
 local friends = client.friends()
@@ -119,7 +122,7 @@ p:close()
 ```
 
 To allow such construct remotely via tango, one has to use the
-`tango.proxy.ref`:
+`tango.ref`:
 
 ```lua
 local client = require'tango.client.socket'.connect()

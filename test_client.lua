@@ -1,6 +1,7 @@
 local backend = arg[1]
 
 local connect = require('tango.client.'..backend).connect
+local tango = require'tango'
 
 local test = function(txt,f)
                io.write(txt..' ... ')
@@ -51,21 +52,21 @@ test('nested method name test',
        return client.nested.method.name()==true
      end)
 
-test('tango.proxy.ref with io.popen',
+test('tango.ref with io.popen',
      function()
-       local pref = tango.proxy.ref(client.io.popen,'echo hello')
+       local pref = tango.ref(client.io.popen,'echo hello')
        local match = pref:read('*a'):find('hello')
        pref:close()
-       tango.proxy.unref(pref)
+       tango.unref(pref)
        return match
      end)
 
-test('tango.proxy.ref with person',
+test('tango.ref with person',
      function()
-       local pref = tango.proxy.ref(client.person,'horst')
+       local pref = tango.ref(client.person,'horst')
        pref:name('peter')
        local match = pref:name() == 'peter'
-       tango.proxy.unref(pref)
+       tango.unref(pref)
        return match
      end)
 

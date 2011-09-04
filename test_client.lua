@@ -51,12 +51,6 @@ test('nested method name test',
        return client.nested.method.name()==true
      end)
 
-test('not existing proxy paths',
-     function()
-       local status = pcall(function()client.notexisting()end) 
-       return status==false
-     end)
-
 test('tango.proxy.ref with io.popen',
      function()
        local pref = tango.proxy.ref(client.io.popen,'echo hello')
@@ -75,16 +69,26 @@ test('tango.proxy.ref with person',
        return match
      end)
 
-test('tango.proxy.var',
+test('creating and accessing variables with number',
      function()
-       tango.proxy.var(client.abc,4)
-       return tango.proxy.var(client.abc) == 4
+       client.x(4)
+       return client.x() == 4 and client.double_x() == 8
      end)
 
-test('tango.proxy.var with tables',
+test('creating and accessing variables with tables',
      function()
-       tango.proxy.var(client.abc,{sub='horst'})
-       local abc = tango.proxy.var(client.abc)
-       return type(abc) == 'table' and abc.sub == 'horst'
+        client.abc({sub='horst',tab={}})
+        client.abc.tab.num(1234)
+       local abc = client.abc()
+       return type(abc) == 'table' and abc.sub == 'horst' and abc.tab.num == 1234
      end)
 
+test('accessing not existing tables causes error',
+     function()
+        local ok,err = pcall(
+           function()
+              client.horst.dieter()
+           end)
+        return ok == false and err:find('horst.dieter')
+     end)
+        

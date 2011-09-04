@@ -41,6 +41,11 @@ person =
     end
     
     return p
+ end
+
+double_x = 
+  function()
+     return 2*x
   end
 
 local server = require('tango.server.'..backend)

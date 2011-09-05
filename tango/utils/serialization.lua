@@ -17,7 +17,7 @@ local print = print
 -- Uses table serialization from http://lua/users.org/wiki/TableUtils and loadstring for unserialize.
 module('tango.utils.serialization')
 
-local serialize
+serialize
 
 local converters = {
   string = function(v)
@@ -72,7 +72,7 @@ serialize =
     return '{'..tconcat(result,',')..'}'
   end
 
-local unserialize = 
+unserialize = 
   function(strtab)
     return loadstring('return '..strtab)()
   end

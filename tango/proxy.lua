@@ -42,7 +42,7 @@ new =
             if response[1] == true then
               return unpack(response,2)
             else
-              error(response[2])
+              error(response[2],2)
             end
           end
       })

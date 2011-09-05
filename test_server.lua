@@ -49,4 +49,4 @@ double_x =
   end
 
 local server = require('tango.server.'..backend)
-server.loop()
+server.loop({write_access=false})

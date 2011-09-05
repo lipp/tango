@@ -17,8 +17,9 @@ new =
     local socket = config.socket
     socket:setoption('tcp-nodelay',true)
     local wrapsocket = copas.wrap(socket)
-    local functab = config.functab or globals
-    local dispatcher = dispatcher.new(functab,copcall)
+    config.functab = config.functab or globals
+    config.pcall = copcall
+    local dispatcher = dispatcher.new(config)
     local serialize = config.serialize or require'tango.utils.serialization'.serialize
     local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
     local ok,err = copcall(

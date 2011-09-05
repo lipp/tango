@@ -16,8 +16,9 @@ new =
     config = config or {}
     local serialize = config.serialize or require'tango.utils.serialization'.serialize
     local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
-    local functab = config.functab or globals
-    local dispatcher = dispatcher.new(functab,pcall)
+    config.functab = config.functab or globals
+    config.pcall = pcall
+    local dispatcher = dispatcher.new(config)
     local server = socket.bind(config.interfaces or "*", config.port or 12345)
     return ev.IO.new(
       function(loop)        

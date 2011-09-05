@@ -6,11 +6,19 @@ local print = print
 
 module('tango.dispatcher')
 
+local error_msg = 
+   function(var_name,msg)
+      local msg = 'tango server error "%s": %s' 
+      return msg:format(var_name,msg)
+   end
+
 local new = 
-  function(functab,pcall)        
+  function(config)        
     local d = {
-      functab = functab,
-      pcall = pcall,
+      functab = config.functab,
+      pcall = config.pcall,
+       read_access = config.read_access or true,
+       write_access = config.write_access or true,
       dispatch = 
         function(self,request)    
           local var = self.functab
@@ -23,7 +31,7 @@ local new =
              if type(var) == 'table' then
                 var = var[part]
             else
-              return {false,'tango server error ' .. '"' .. var_name .. '": no such variable'}
+               return {false,error_msg(var_name,'no such variable')}
             end  
           end        
           if type(var) == 'function' then
@@ -31,12 +39,20 @@ local new =
           else
              local val = request[2]
              if val then
-                return {self.pcall(
-                           function()
-                              last_var[last_part] = val
-                           end)}
+                if not self.write_access then
+                   return {false,error_msg(var_name,'no write_access')}
+                else
+                   return {self.pcall(
+                              function()
+                                 last_var[last_part] = val
+                              end)}
+                end
              else
-                return {true,var}
+                if not self.read_access then
+                   return {false,error_msg(var_name,'no read_access')}
+                else
+                   return {true,var}
+                end
              end
           end        
           
@@ -44,7 +60,7 @@ local new =
     }
 
     d.refs = {}
-    d.functab.tango = functab.tango or {}
+    d.functab.tango = d.functab.tango or {}
     
     d.functab.tango.ref_create = 
       function(create_method,...)

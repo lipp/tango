@@ -19,6 +19,7 @@ dependencies = {
 build = {
    type = 'builtin',
    modules = {
+      ['tango'] = 'tango.lua',
       ['tango.proxy'] = 'tango/proxy.lua',
       ['tango.dispatcher'] = 'tango/dispatcher.lua',
       ['tango.utils.serialization'] = 'tango/utils/serialization.lua',

@@ -98,7 +98,7 @@ local client = require'tango.client.socket'.connect()
 local friends = client.friends()
 ```
 
-If you want to change the servers state, just pass the new value as
+To change the servers state, just pass the new value as
 argument:
 
 ```lua
@@ -106,6 +106,17 @@ local client = require'tango.client.socket'.connect()
 local friends = client.friends()
 table.insert(friends,'Horst')
 client.friends(friends)
+```
+
+If you are worried about security concerns, just do not allow
+variable:
+
+```lua
+require'tango.server.copas_socket'
+tango.server.copas_socket.loop{
+  write_access = false,
+  read_access = false
+}
 ```
 
 Using classes/tables/objects remotely (tango.ref)

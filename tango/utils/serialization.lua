@@ -1,4 +1,3 @@
--- private helpers
 local tinsert = table.insert
 local tconcat = table.concat
 local tremove = table.remove
@@ -77,4 +76,7 @@ unserialize =
     return loadstring('return '..strtab)()
   end
 
-return {serialize=serialize,unserialize=unserialize}
+return {
+  serialize = serialize,
+  unserialize = unserialize
+}

@@ -37,4 +37,7 @@ local receive =
       return response
    end
 
-return {send=send,receive=receive}
+return {
+  send = send,
+  receive = receive
+}

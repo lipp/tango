@@ -17,8 +17,8 @@ local new =
     local d = {
       functab = config.functab,
       pcall = config.pcall,
-       read_access = config.read_access or true,
-       write_access = config.write_access or true,
+      read_access = config.read_access,
+      write_access = config.write_access,
       dispatch = 
         function(self,request)    
           local var = self.functab
@@ -97,4 +97,6 @@ local new =
     return d
   end
 
-return {new=new}
+return {
+  new = new
+}

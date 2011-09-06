@@ -180,7 +180,8 @@ local cjson = require'cjson'
 local connect = require'tango.client.socket'.connect
 local client = connect{
    serialize = cjson.encode,
-   unserialize = cjson.decode}
+   unserialize = cjson.decode
+}
 ```
 
 Copas socket server with customized serialization:
@@ -190,7 +191,8 @@ local cjson = require'cjson'
 local server = require'tango.server.copas_socket'
 server.loop{
    serialize = cjson.encode,
-   unserialize = cjson.decode}
+   unserialize = cjson.decode
+}
 ```
 
 Some alternatives are:

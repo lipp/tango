@@ -1,5 +1,5 @@
 local backend = arg[1]
-
+local mode = arg[2] or 'rw'
 add = 
   function(a,b)
     return a+b
@@ -48,5 +48,15 @@ double_x =
      return 2*x
   end
 
+data = {
+  x = 0,
+  y = 3
+}
+
 local server = require('tango.server.'..backend)
-server.loop({write_access=false})
+
+server.loop{
+  write_access = mode:find('w') ~= nil,
+  read_access = mode:find('r') ~= nil
+}
+

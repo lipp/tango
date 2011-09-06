@@ -1,5 +1,8 @@
 local require = require
 local globals = _G
+local pcall = pcall
+
+module('tango.config')
 
 server_default = 
   function(config)
@@ -8,8 +11,12 @@ server_default =
     config.serialize = config.serialize or require'tango.utils.serialization'.serialize
     config.unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
     config.pcall = pcall
-    config.write_access = true
-    config.read_access = true
+    if config.write_access == nil then
+      config.write_access = true
+    end
+    if config.read_access == nil then
+      config.read_access = true
+    end
     return config
   end
 

@@ -7,9 +7,9 @@ local print = print
 module('tango.dispatcher')
 
 local error_msg = 
-   function(var_name,msg)
+   function(var_name,err)
       local msg = 'tango server error "%s": %s' 
-      return msg:format(var_name,msg)
+      return msg:format(var_name,err)
    end
 
 local new = 

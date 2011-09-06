@@ -1,11 +1,11 @@
 #!/usr/bin/lua
 local spawn_server = 
-   function(backend)
+   function(backend,access_str)
       local cmd = [[
-            lua test_server.lua >test_server.log %s &
+            lua test_server.lua >test_server.log %s %s &
             echo $!            
       ]]
-      cmd = cmd:format(backend)
+      cmd = cmd:format(backend,access_str)
       local process = io.popen(cmd)
       local pid = process:read()
       if backend ~= 'zmq' then
@@ -20,8 +20,8 @@ local kill_server =
    end
 
 local run_client_test = 
-   function(backend)
-      os.execute('lua test_client.lua '..backend)
+   function(backend,access_str)
+      os.execute('lua test_client.lua '..backend..' '..access_str)
    end
 
 
@@ -32,9 +32,12 @@ local run_test =
       print('server backend:',server_backend)
       print('client backend:',client_backend)
       print('------------------------------')
-      local pid = spawn_server(server_backend)
-      run_client_test(client_backend)
-      kill_server(pid)
+      for _,access in ipairs{'rw','r','w'} do 
+        print('access: ',access)
+        local pid = spawn_server(server_backend,access)
+        run_client_test(client_backend,access)
+        kill_server(pid)
+      end
       print()
    end
 

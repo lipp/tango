@@ -4,22 +4,20 @@ local default_loop = ev.Loop.default
 local send_message = require'tango.utils.socket_message'.send
 local receive_message = require'tango.utils.socket_message'.receive
 local dispatcher = require'tango.dispatcher'
-local require = require
+local default = require'tango.config'.server_default
 local pcall = pcall
 local print = print
-local globals = _G
 
 module('tango.server.ev_socket')
 
 new = 
   function(config)  
-    config = config or {}
-    local serialize = config.serialize or require'tango.utils.serialization'.serialize
-    local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
-    config.functab = config.functab or globals
-    config.pcall = pcall
+    config = default(config)
+    local serialize = config.serialize
+    local unserialize = config.unserialize   
     local dispatcher = dispatcher.new(config)
-    local server = socket.bind(config.interfaces or "*", config.port or 12345)
+    local server = socket.bind(config.interfaces or "*", 
+                               config.port or 12345)
     return ev.IO.new(
       function(loop)        
         local client = server:accept()

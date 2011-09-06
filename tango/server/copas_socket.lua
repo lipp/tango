@@ -6,46 +6,49 @@ local print = print
 local send_message = require'tango.utils.socket_message'.send
 local receive_message = require'tango.utils.socket_message'.receive
 local dispatcher = require'tango.dispatcher'
-local require = require
-local globals = _G
+local default = require'tango.config'.server_default
 
 module('tango.server.copas_socket')
 
 new = 
   function(config)
-    config = config or {}
-    local socket = config.socket
-    socket:setoption('tcp-nodelay',true)
-    local wrapsocket = copas.wrap(socket)
-    config.functab = config.functab or globals
+    config = default(config)
     config.pcall = copcall
-    local dispatcher = dispatcher.new(config)
-    local serialize = config.serialize or require'tango.utils.serialization'.serialize
-    local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
-    local ok,err = copcall(
-      function()
-        while true do
-          local request_str = receive_message(wrapsocket)
-          local request = unserialize(request_str)
-          local response = dispatcher:dispatch(request)
-          local response_str = serialize(response)
-          send_message(wrapsocket,response_str)
-          wrapsocket:flush()
+    config.interface = config.interface or '*'
+    config.port = config.port or 12345
+    local request_loop = 
+      function(sock)
+        sock:setoption('tcp-nodelay',true)
+        local wrapsock = copas.wrap(sock)        
+        local dispatcher = dispatcher.new(config)        
+        local serialize = config.serialize
+        local unserialize = config.unserialize        
+        local ok,err = copcall(
+          function()
+            while true do
+              local request_str = receive_message(wrapsock)
+              local request = unserialize(request_str)
+              local response = dispatcher:dispatch(request)
+              local response_str = serialize(response)
+              send_message(wrapsock,response_str)
+              wrapsock:flush()
+            end
+          end)
+        if not ok then
+          print(err)
         end
-      end)
-    if not ok then
-      print(err)
-    end
+      end
+    return socket.bind(config.interface,config.port),request_loop    
   end
 
 loop = 
   function(config)
-    config = config or {}
-    copas.addserver(socket.bind(config.interfaces or '*',config.port or 12345),
-                    function(socket) 
-                      config.socket = socket
-                      new(config) 
-                    end)
+    copas.addserver(new(config))
     copas.loop()
   end
+
+return {
+  new = new,
+  loop = loop
+}
 

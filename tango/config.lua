@@ -1,0 +1,28 @@
+local require = require
+local globals = _G
+
+server_default = 
+  function(config)
+    config = config or {}
+    config.functab = config.functab or globals
+    config.serialize = config.serialize or require'tango.utils.serialization'.serialize
+    config.unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
+    config.pcall = pcall
+    config.write_access = true
+    config.read_access = true
+    return config
+  end
+
+client_default = 
+  function(config)
+    config = config or {}
+    config.serialize = config.serialize or require'tango.utils.serialization'.serialize
+    config.unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
+    return config
+  end
+
+return {
+  server_default = server_default,
+  client_default = client_default
+}
+    

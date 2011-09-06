@@ -17,7 +17,7 @@ local print = print
 -- Uses table serialization from http://lua/users.org/wiki/TableUtils and loadstring for unserialize.
 module('tango.utils.serialization')
 
-serialize
+serialize = nil
 
 local converters = {
   string = function(v)

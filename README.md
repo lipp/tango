@@ -9,7 +9,7 @@ Its main features are:
 * a generic transparent
   [proxy](https://github.com/lipp/tango/blob/develop/tango/proxy.lua)
   for call invocations
-* support of remote objects (tables with functions, userdata etc, see tango.proxy.ref)
+* support of remote objects (tables with functions, userdata etc, see tango.ref)
 * a generic [dispatch](https://github.com/lipp/tango/blob/develop/tango/dispatch.lua) routine for servers
 * several server implementations for different protocols, message formats and event/io
 frameworks, further called backends
@@ -23,7 +23,7 @@ Backends included
 * [lua-zmq](https://github.com/Neopallium/lua-zmq)
 * [lua-ev](https://github.com/brimworks/lua-ev)
 
-Tutorial (with copas backend)
+Tutorial (copas_socket server +  socket client)
 ============================
 
 Greetings!

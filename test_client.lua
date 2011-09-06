@@ -1,8 +1,28 @@
-local backend = arg[1]
-local mode = arg[2]
+local server_backend = arg[1]
+local client_backend = arg[2]
 
-local connect = require('tango.client.'..backend).connect
+local connect = require('tango.client.'..client_backend).connect
 local tango = require'tango'
+
+local spawn_server = 
+  function(backend,access_str)
+    local cmd = [[
+        lua test_server.lua >test_server.log %s %s &
+        echo $!            
+    ]]
+    cmd = cmd:format(backend,access_str)
+    local process = io.popen(cmd)
+    local pid = process:read()
+    if backend ~= 'zmq' then
+      os.execute('sleep 0.2')
+    end
+    return {
+      pid = pid,
+      kill = function()
+               os.execute('kill '..pid)
+             end
+    }
+  end
 
 local tests = 0
 local failed = 0
@@ -20,125 +40,139 @@ local test = function(txt,f)
                end
              end
 
+local server = spawn_server(server_backend,'rw')
 local client = connect()
 
-if not mode or mode == 'rw' then
+print('==============================')
+print('running tests with:')
+print('server backend:',server_backend)
+print('client backend:',client_backend)
+print('------------------------------')
 
-  test('add test',
-       function()
-         return client.add(1,2)==3
-       end)
+test('add test',
+     function()
+       return client.add(1,2)==3
+     end)
 
-  test('echo test',
-       function()
-         local tab = {number=444,name='horst',bool=true}
-         local tab2 = client.echo(tab)
-         return tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool
-       end)
+test('echo test',
+     function()
+       local tab = {number=444,name='horst',bool=true}
+       local tab2 = client.echo(tab)
+       return tab.number==tab2.number and tab.name==tab2.name and tab.bool==tab2.bool
+     end)
 
-  test('multiple return values',
-       function()
-         local a,b,c = 1.234,true,{el=11}
-         local a2,b2,c2 = client.echo(a,b,c)
-         return a==a2 and b==b2 and c.el==c2.el
-       end)
+test('multiple return values',
+     function()
+       local a,b,c = 1.234,true,{el=11}
+       local a2,b2,c2 = client.echo(a,b,c)
+       return a==a2 and b==b2 and c.el==c2.el
+     end)
 
-  test('string error test',
-       function()
-         local status,msg = pcall(function()client.strerror()end)
-         return status==false and type(msg) == 'string' and msg:find('testmessage') 
-       end)
+test('string error test',
+     function()
+       local status,msg = pcall(function()client.strerror()end)
+       return status==false and type(msg) == 'string' and msg:find('testmessage') 
+     end)
 
-  test('custom error test',
-       function()
-         local errtab = {code=117}
-         local status,errtab2 = pcall(function()client.customerror(errtab)end)
-         return status==false and type(errtab2) == 'table' and errtab2.code==errtab.code
-       end)
+test('custom error test',
+     function()
+       local errtab = {code=117}
+       local status,errtab2 = pcall(function()client.customerror(errtab)end)
+       return status==false and type(errtab2) == 'table' and errtab2.code==errtab.code
+     end)
 
-  test('nested method name test',
-       function()
-         return client.nested.method.name()==true
-       end)
+test('nested method name test',
+     function()
+       return client.nested.method.name()==true
+     end)
 
-  test('tango.ref with io.popen',
-       function()
-         local pref = tango.ref(client.io.popen,'echo hello')
-         local match = pref:read('*a'):find('hello')
-         pref:close()
-         tango.unref(pref)
-         return match
-       end)
+test('tango.ref with io.popen',
+     function()
+       local pref = tango.ref(client.io.popen,'echo hello')
+       local match = pref:read('*a'):find('hello')
+       pref:close()
+       tango.unref(pref)
+       return match
+     end)
 
-  test('tango.ref with person',
-       function()
-         local pref = tango.ref(client.person,'horst')
-         pref:name('peter')
-         local match = pref:name() == 'peter'
-         tango.unref(pref)
-         return match
-       end)
+test('tango.ref with person',
+     function()
+       local pref = tango.ref(client.person,'horst')
+       pref:name('peter')
+       local match = pref:name() == 'peter'
+       tango.unref(pref)
+       return match
+     end)
 
-  test('creating and accessing variables with number',
-       function()
-         client.x(4)
-         return client.x() == 4 and client.double_x() == 8
-       end)
+test('creating and accessing variables with number',
+     function()
+       client.x(4)
+       return client.x() == 4 and client.double_x() == 8
+     end)
 
-  test('creating and accessing variables with tables',
-       function()
-         client.abc({sub='horst',tab={}})
-         client.abc.tab.num(1234)
-         local abc = client.abc()
-         return type(abc) == 'table' and abc.sub == 'horst' and abc.tab.num == 1234
-       end)
+test('creating and accessing variables with tables',
+     function()
+       client.abc({sub='horst',tab={}})
+       client.abc.tab.num(1234)
+       local abc = client.abc()
+       return type(abc) == 'table' and abc.sub == 'horst' and abc.tab.num == 1234
+     end)
 
-  test('accessing not existing tables causes error',
-       function()
-         local ok,err = pcall(
-           function()
-             client.horst.dieter()
-           end)
-         return ok == false and err:find('horst.dieter')
-       end)
+test('accessing not existing tables causes error',
+     function()
+       local ok,err = pcall(
+         function()
+           client.horst.dieter()
+         end)
+       return ok == false and err:find('horst.dieter')
+     end)
 
-elseif mode == 'r' then
-  test('reading remote variable',
-       function()         
-         local d = client.data()
-         return d.x == 0 and d.y == 3
-       end)
+server:kill()
+server = spawn_server(server_backend,'r')
+client = connect()
 
-  test('writing remote variable causes error',
-       function()
-         local ok,err = pcall(
-           function()
-             client.data(33)
-           end)
-         return ok == false
-       end)
-  
-elseif mode == 'w' then
-  test('reading remote variable causes error',
-       function()
-         local ok,err = pcall(
-           function()
-             client.data()
-           end)
-         return ok == false
-       end)
-  
-  test('writing remote variable',
-       function()
-         local ok,err = pcall(
-           function()
-             client.data(33)
-           end)
-         return ok == true
-       end)
-end
+test('reading remote variable',
+     function()         
+       local d = client.data()
+       return d.x == 0 and d.y == 3
+     end)
 
---print('#tests',tests)
---print('#ok',ok)
---print('#failed',failed)
-  
+test('writing remote variable causes error',
+     function()
+       local ok,err = pcall(
+         function()
+           client.data(33)
+         end)
+       return ok == false
+     end)
+
+server:kill()
+server = spawn_server(server_backend,'w')
+client = connect()
+
+test('reading remote variable causes error',
+     function()
+       local ok,err = pcall(
+         function()
+           client.data()
+         end)
+       return ok == false
+     end)
+
+test('writing remote variable',
+     function()
+       local ok,err = pcall(
+         function()
+           client.data(33)
+         end)
+       return ok == true
+     end)
+
+server:kill()
+
+print('--------------------------------')
+print('#TESTS',tests)
+print('#OK',ok)
+print('#FAILED',failed)
+print('================================')
+

@@ -229,7 +229,7 @@ With LuaRocks > 2.0.4.1:
 The complete package require lua-zmq and lua-ev. If you don't plan to
 use them and stick to copas, use this:
   
-     $ sudo luarocks install https://raw.github.com/lipp/tango/release/0.2/rockspecs/tango-copas-0.1-1.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/release/0.2/rockspecs/tango-copas-0.2-1.rockspec
 
 Note: luarocks require luasec for doing https requests.
 

@@ -1,8 +1,8 @@
 package = 'tango-copas'
-version = '0.1-1'
+version = '0.2-1'
 source = {
    url = 'git://github.com/lipp/tango.git',
-   branch = 'develop'
+   branch = 'release/0.2'
 }
 description = {
    summary = 'Remote procedure calls (RPC) for Lua.',

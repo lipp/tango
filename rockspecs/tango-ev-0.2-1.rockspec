@@ -1,8 +1,8 @@
 package = 'tango-ev'
-version = '0.1-1'
+version = '0.2-1'
 source = {
    url = 'git://github.com/lipp/tango.git',
-   branch = 'develop'
+   tag = '0.2-1'
 }
 description = {
    summary = 'Remote procedure calls (RPC) for Lua.',
@@ -20,6 +20,7 @@ build = {
       ['tango'] = 'tango.lua',
       ['tango.proxy'] = 'tango/proxy.lua',
       ['tango.dispatcher'] = 'tango/dispatcher.lua',
+      ['tango.config'] = 'tango/config.lua',
       ['tango.utils.serialization'] = 'tango/utils/serialization.lua',
       ['tango.utils.socket_message'] = 'tango/utils/socket_message.lua',
       ['tango.client.socket'] = 'tango/client/socket.lua',

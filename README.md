@@ -146,12 +146,12 @@ Installation
 -------------
 With LuaRocks > 2.0.4.1:
 
-     $ sudo luarocks install https://raw.github.com/lipp/tango/tree/0.1.1/rockspecs/tango-complete-0.1-1.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/tree/0.1.1/rockspecs/tango-complete-0.1-2.rockspec
 
 The complete package require lua-zmq and lua-ev. If you don't plan to
 use them and stick to copas, use this:
   
-     $ sudo luarocks install https://raw.github.com/lipp/tango/tree/0.1.1/rockspecs/tango-copas-0.1-1.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/tree/0.1.1/rockspecs/tango-copas-0.1-2.rockspec
 
 Note: luarocks require luasec for doing https requests.
 

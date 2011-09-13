@@ -6,8 +6,11 @@ module for Lua.
 
 Its main features are:
 
-* a generic transparent [proxy](https://github.com/lipp/tango/blob/master/tango/proxy.lua) for call invocations
-* a generic [dispatch](https://github.com/lipp/tango/blob/master/tango/dispatch.lua) routine for servers
+* a generic transparent
+  [proxy](https://github.com/lipp/tango/tree/0.2/tango/proxy.lua)
+  for call invocations
+* support of remote objects (tables with functions, userdata etc, see tango.ref)
+* a generic [dispatch](https://github.com/lipp/tango/tree/0.2/tango/dispatch.lua) routine for servers
 * several server implementations for different protocols, message formats and event/io
 frameworks, further called backends
 * several client implementations for different protocols and message formats
@@ -20,8 +23,12 @@ Backends included
 * [lua-zmq](https://github.com/Neopallium/lua-zmq)
 * [lua-ev](https://github.com/brimworks/lua-ev)
 
-Example (with copas backend)
---------------------------------
+Tutorial (copas_socket server +  socket client)
+============================
+
+Greetings!
+----------
+
 The greet server code 
 
 ```lua
@@ -44,6 +51,9 @@ local proxy = tango.client.socket.connect{
 }
 proxy.greet('Hello','Horst')
 ```
+
+Access anything?
+----------------
 
 Since the server exposes the global table `_G` per default, the client may even
 directly call `print`,let the server sleep a bit remotely
@@ -73,9 +83,73 @@ only call methods from the math module:
 proxy.sqrt(4)
 ```
 
+Remote Variables
+-----------------
+
+Sometimes you need to get some data from the server, as
+enumaration-like-constants for instance. Instead of creating a mess of
+remote getters and setters, just treat the value of interest as a
+function...
+
+Let's read the remote table friends from the server
+
+```lua
+local client = require'tango.client.socket'.connect()
+local friends = client.friends()
+```
+
+To change the servers state, just pass the new value as
+argument:
+
+```lua
+local client = require'tango.client.socket'.connect()
+local friends = client.friends()
+table.insert(friends,'Horst')
+client.friends(friends)
+```
+
+If you are worried about security concerns, just do not allow
+variable:
+
+```lua
+require'tango.server.copas_socket'
+tango.server.copas_socket.loop{
+  write_access = false,
+  read_access = false
+}
+```
+
+Using classes/tables/objects remotely (tango.ref)
+-----------------------------------------
+
+Even if Lua does not come with a class model, semi-object-oriented
+programming is broadly used via the semicolon operator, e.g.:
+
+```lua
+local p = io.popen('ls')
+local line = p:read('*l')
+...
+p:close()
+```
+
+To allow such construct remotely via tango, one has to use the
+`tango.ref`:
+
+```lua
+local client = require'tango.client.socket'.connect()
+local p = tango.ref(client.io.popen,'ls')
+local line = p:read('*l')
+...
+p:close()
+tango.unref(p)
+```
+
+This may seem a bit awkward, but it is certainly less hassle, then
+writing non-object-oriented counterparts on the server side.
+
 
 Tests
-------
+=====
 
 You can run test by the following sh call in the project root directory
 
@@ -117,7 +191,8 @@ local cjson = require'cjson'
 local connect = require'tango.client.socket'.connect
 local client = connect{
    serialize = cjson.encode,
-   unserialize = cjson.decode}
+   unserialize = cjson.decode
+}
 ```
 
 Copas socket server with customized serialization:
@@ -127,7 +202,8 @@ local cjson = require'cjson'
 local server = require'tango.server.copas_socket'
 server.loop{
    serialize = cjson.encode,
-   unserialize = cjson.decode}
+   unserialize = cjson.decode
+}
 ```
 
 Some alternatives are:
@@ -141,19 +217,19 @@ Requirements
 ------------
 
 The requirements depend on the desired i/o backend, see the
-corresponding [rockspecs](https://github.com/lipp/tango/tree/master/rockspecs) for details.
+corresponding [rockspecs](https://github.com/lipp/tango/tree/0.2/rockspecs) for details.
 
 
 Installation
 -------------
 With LuaRocks > 2.0.4.1:
 
-     $ sudo luarocks install https://raw.github.com/lipp/tango/master/rockspecs/tango-complete-0.1-1.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/tree/0.2/rockspecs/tango-complete-0.2-1.rockspec
 
 The complete package require lua-zmq and lua-ev. If you don't plan to
 use them and stick to copas, use this:
   
-     $ sudo luarocks install https://raw.github.com/lipp/tango/master/rockspecs/tango-copas-0.1-1.rockspec
+     $ sudo luarocks install https://raw.github.com/lipp/tango/tree/0.2/rockspecs/tango-copas-0.2-1.rockspec
 
 Note: luarocks require luasec for doing https requests.
 

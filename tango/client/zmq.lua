@@ -1,36 +1,35 @@
 local zmq = require"zmq"
 local proxy = require'tango.proxy'
-local print = print
-local pcall = pcall
-local globals = _G
-local require = require
+local default = require'tango.config'.client_default
 
---- A zmq (zeromq) compatible transport backend for tango.
 module('tango.client.zmq')
+
+local context
 
 connect = 
   function(config)
-    config = config or {}
-    local context = config.context or zmq.init(1)
-    local socket = context:socket(zmq.REQ)
-    socket:connect(config.url or 'tcp://localhost:12345')
-
-    local serialize = config.serialize or require'tango.utils.serialization'.serialize
-    local unserialize = config.unserialize or require'tango.utils.serialization'.unserialize
-
+    config = default(config)
+    config.url = config.url or 'tcp://localhost:12345'
+    -- prevent multiple calls to zmq.init!
+    config.context = config.context or context or zmq.init(1)
+    context = config.context
+    local socket = config.context:socket(zmq.REQ)
+    socket:connect(config.url)
+    local serialize = config.serialize
+    local unserialize = config.unserialize
     local send_request = 
       function(request)             
         local request_str = serialize(request)
         socket:send(request_str)
-      end
-    
+      end    
     local recv_response = 
       function()
         local response_str = socket:recv()
         return unserialize(response_str)    
-      end
-    
-    return proxy(send_request,recv_response)
+      end    
+    return proxy.new(send_request,recv_response)
   end
 
-return {connect=connect}
+return {
+  connect = connect
+}

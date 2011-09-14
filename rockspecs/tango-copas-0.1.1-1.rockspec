@@ -19,7 +19,6 @@ build = {
    modules = {
       ['tango.proxy'] = 'tango/proxy.lua',
       ['tango.dispatch'] = 'tango/dispatch.lua',
-      ['tango.config'] = 'tango/config.lua',
       ['tango.utils.serialization'] = 'tango/utils/serialization.lua',
       ['tango.utils.socket_message'] = 'tango/utils/socket_message.lua',
       ['tango.client.socket'] = 'tango/client/socket.lua',

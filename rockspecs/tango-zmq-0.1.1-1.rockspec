@@ -18,7 +18,6 @@ build = {
    modules = {
       ['tango.proxy'] = 'tango/proxy.lua',
       ['tango.dispatch'] = 'tango/dispatch.lua',
-      ['tango.config'] = 'tango/config.lua',
       ['tango.utils.serialization'] = 'tango/utils/serialization.lua',
       ['tango.client.zmq'] = 'tango/client/zmq.lua',
       ['tango.server.zmq'] = 'tango/server/zmq.lua'

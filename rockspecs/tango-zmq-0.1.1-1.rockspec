@@ -1,8 +1,8 @@
 package = 'tango-zmq'
-version = '0.2-1'
+version = '0.1.1-1'
 source = {
    url = 'git://github.com/lipp/tango.git',
-   branch = '0.2.1'
+   branch = '0.1.1'
 }
 description = {
    summary = 'Remote procedure calls (RPC) for Lua.',
@@ -18,7 +18,7 @@ build = {
    modules = {
       ['tango'] = 'tango.lua',
       ['tango.proxy'] = 'tango/proxy.lua',
-      ['tango.dispatcher'] = 'tango/dispatcher.lua',
+      ['tango.dispatch'] = 'tango/dispatch.lua',
       ['tango.config'] = 'tango/config.lua',
       ['tango.utils.serialization'] = 'tango/utils/serialization.lua',
       ['tango.client.zmq'] = 'tango/client/zmq.lua',

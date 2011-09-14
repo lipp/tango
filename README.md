@@ -7,10 +7,10 @@ module for Lua.
 Its main features are:
 
 * a generic transparent
-  [proxy](https://github.com/lipp/tango/tree/0.2.1/tango/proxy.lua)
+  [proxy](https://github.com/lipp/tango/tree/master/tango/proxy.lua)
   for call invocations
 * support of remote objects (tables with functions, userdata etc, see tango.ref)
-* a generic [dispatch](https://github.com/lipp/tango/tree/0.2.1/tango/dispatch.lua) routine for servers
+* a generic [dispatch](https://github.com/lipp/tango/tree/master/tango/dispatch.lua) routine for servers
 * several server implementations for different protocols, message formats and event/io
 frameworks, further called backends
 * several client implementations for different protocols and message formats
@@ -217,20 +217,25 @@ Requirements
 ------------
 
 The requirements depend on the desired i/o backend, see the
-corresponding [rockspecs](https://github.com/lipp/tango/tree/0.2/rockspecs) for details.
+corresponding [rockspecs](https://github.com/lipp/tango/tree/master/rockspecs) for details.
 
 
 Installation
 -------------
-With LuaRocks > 2.0.4.1:
+With LuaRocks >= 2.0.4.1:
+Directly from the [luarocks](http://www.luarocks.org) repository
 
-     $ sudo luarocks install https://raw.github.com/lipp/tango/0.2.1/rockspecs/tango-complete-0.2-1.rockspec
+     $ sudo luarocks install tango-copas
+    
+or tango-complete, which requires lua-zmq and lua-ev
 
-The complete package requires lua-zmq and lua-ev. If you don't plan to
-use one of them just stick to the copas variant:
-  
-     $ sudo luarocks install https://raw.github.com/lipp/tango/0.2.1/rockspecs/tango-copas-0.2-1.rockspec
+     $ sudo luarocks install tango-complete
+
+or a specific rock from
+
+     $ sudo luarocks install https://raw.github.com/lipp/tango/master/rockspecs/SPECIFIC_ROCKSPEC
 
 Note: luarocks require luasec for doing https requests.
 
+     $ sudo apt-get install libssl-dev
      $ sudo luarocks install luasec

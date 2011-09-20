@@ -1,8 +1,8 @@
 local server_backend = arg[1]
 local client_backend = arg[2]
 
-local connect = require('tango.client.'..client_backend).connect
 local tango = require'tango'
+local connect = tango.client[client_backend].connect
 
 local spawn_server = 
   function(backend,access_str)

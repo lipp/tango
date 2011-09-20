@@ -2,6 +2,8 @@ local rawget = rawget
 local rawset = rawset
 local setmetatable = setmetatable
 local print = print
+local require = require
+local pcall = pcall
 local new = require'tango.proxy'.new
 
 module('tango.ref')
@@ -53,8 +55,27 @@ unref =
     proxy.tango.ref_release(id)
   end
 
+local try_require = 
+  function(module)
+     local ok,mod = pcall(require,module)
+     if ok then
+        return mod
+     else
+        return nil
+     end
+  end
+
 return {
   ref = ref,
-  unref = unref
+  unref = unref,
+  client = {
+     socket = try_require('tango.client.socket'),
+     zmq = try_require('tango.client.zmq')
+  },
+  server = {
+     copas_socket = try_require('tango.server.copas_socket'),
+     ev_socket = try_require('tango.server.ev_socket'),
+     zmq = try_require('tango.server.zmq')
+  }  
 }
 

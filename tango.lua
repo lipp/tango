@@ -4,7 +4,7 @@ local setmetatable = setmetatable
 local print = print
 local new = require'tango.proxy'.new
 
-module('tango.ref')
+module('tango')
 
 local rproxies = {}
 

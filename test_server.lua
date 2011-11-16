@@ -53,7 +53,8 @@ data = {
   y = 3
 }
 
-local server = require('tango.server.'..backend)
+local tango = require'tango'
+local server = tango.server[backend]
 
 server.loop{
   write_access = mode:find('w') ~= nil,

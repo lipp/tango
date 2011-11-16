@@ -1,5 +1,5 @@
 package = 'tango-complete'
-version = '0.2-1'
+version = '0.2.1-1'
 source = {
    url = 'git://github.com/lipp/tango.git',
    branch = '0.2.1'

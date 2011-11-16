@@ -14,9 +14,10 @@ local spawn_server =
     local process = io.popen(cmd)
     local pid = process:read()
     if backend ~= 'zmq' then
-      os.execute('sleep 0.2')
+      os.execute('sleep 1')
     end
     return {
+      process = process,
       pid = pid,
       kill = function()
                os.execute('kill '..pid)

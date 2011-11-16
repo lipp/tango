@@ -1,6 +1,7 @@
 local error = error
 local pcall = pcall
 local socket = require'socket'
+require'tango' -- automatically import tango.ref ans tango.unref
 local proxy = require'tango.proxy'
 local send_message = require'tango.utils.socket_message'.send
 local receive_message = require'tango.utils.socket_message'.receive

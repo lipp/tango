@@ -1,16 +1,24 @@
 local server_backend = arg[1]
 local client_backend = arg[2]
+local option = arg[3]
 
 local tango = require'tango'
+local config = {}
+if option then
+  if option == 'ssl' then
+    config.sslparams = require'test_ssl_config'.client
+  end
+end
+
 local connect = tango.client[client_backend].connect
 
 local spawn_server = 
   function(backend,access_str)
     local cmd = [[
-        lua test_server.lua >test_server.log %s %s &
+        lua test_server.lua %s %s %s &
         echo $!            
     ]]
-    cmd = cmd:format(backend,access_str)
+    cmd = cmd:format(backend,access_str,option or '')
     local process = io.popen(cmd)
     local pid = process:read()
     if backend ~= 'zmq' then
@@ -42,12 +50,15 @@ local test = function(txt,f)
              end
 
 local server = spawn_server(server_backend,'rw')
-local client = connect()
+local client = connect(config)
 
 print('==============================')
 print('running tests with:')
 print('server backend:',server_backend)
 print('client backend:',client_backend)
+if option then
+  print('option:',option)
+end
 print('------------------------------')
 
 test('add test',
@@ -130,7 +141,7 @@ test('accessing not existing tables causes error',
 
 server:kill()
 server = spawn_server(server_backend,'r')
-client = connect()
+client = connect(config)
 
 test('reading remote variable',
      function()         
@@ -149,7 +160,7 @@ test('writing remote variable causes error',
 
 server:kill()
 server = spawn_server(server_backend,'w')
-client = connect()
+client = connect(config)
 
 test('reading remote variable causes error',
      function()

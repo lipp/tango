@@ -5,6 +5,7 @@ local run_client_test =
    end
 
 run_client_test('copas_socket','socket')
+run_client_test('copas_socket','socket','ssl')
 run_client_test('ev_socket','socket')
 run_client_test('zmq','zmq')
 

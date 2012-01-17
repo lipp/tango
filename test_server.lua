@@ -1,5 +1,16 @@
 local backend = arg[1]
 local mode = arg[2] or 'rw'
+local option = arg[3]
+
+local config = {}
+if option then
+  if option == 'ssl' then
+    config.sslparams = require'test_ssl_config'.server
+  end
+end
+config.write_access = mode:find('w') ~= nil
+config.read_access = mode:find('r') ~= nil
+
 add = 
   function(a,b)
     return a+b
@@ -55,9 +66,5 @@ data = {
 
 local tango = require'tango'
 local server = tango.server[backend]
-
-server.loop{
-  write_access = mode:find('w') ~= nil,
-  read_access = mode:find('r') ~= nil
-}
+server.loop(config)
 

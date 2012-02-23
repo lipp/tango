@@ -1,4 +1,5 @@
 local zmq = require"zmq"
+require'tango' -- automatically import tango.ref ans tango.unref
 local proxy = require'tango.proxy'
 local default = require'tango.config'.client_default
 
